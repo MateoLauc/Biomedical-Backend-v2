@@ -1,0 +1,61 @@
+import type { Request, Response, NextFunction } from "express";
+import { verifyAccessToken } from "../lib/auth/jwt";
+import { unauthorized, forbidden } from "../lib/http-errors";
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: {
+      userId: string;
+      role: "super_admin" | "admin" | "customer";
+      emailVerified: boolean;
+    };
+  }
+}
+
+export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw unauthorized("Missing or invalid authorization header");
+    }
+
+    const token = authHeader.substring(7);
+    const payload = await verifyAccessToken(token);
+
+    req.user = {
+      userId: payload.userId,
+      role: payload.role,
+      emailVerified: payload.emailVerified
+    };
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+export function requireRole(...allowedRoles: Array<"super_admin" | "admin" | "customer">) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(unauthorized("Authentication required"));
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return next(forbidden("Insufficient permissions"));
+    }
+
+    next();
+  };
+}
+
+export function requireEmailVerified(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    return next(unauthorized("Authentication required"));
+  }
+
+  if (!req.user.emailVerified) {
+    return next(forbidden("Email verification required"));
+  }
+
+  next();
+}

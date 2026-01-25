@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "Biomedical Backend API",
+    "description": "Complete API collection for Biomedical Backend - a production-grade medication e-commerce platform.\n\n## Features\n- Authentication & Authorization (JWT-based)\n- User Management\n- Product Catalog\n- Shopping Cart\n- Order Management\n- Admin Dashboard\n\n## Base URL\nDefault: `http://localhost:4000`\n\n## Authentication\nMost endpoints require authentication via JWT access token in the `Authorization: Bearer <token>` header.\n\n## Collection Variables\n- `baseUrl`: API base URL (default: http://localhost:4000)\n- `accessToken`: JWT access token (auto-saved after signin/refresh)\n\n## Testing Flow\n1. Start with **Health Check** to verify server\n2. Use **Auth** folder endpoints for authentication\n3. Access token is automatically saved after signin/refresh\n4. Use saved token for protected endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the API server is running and healthy.\n\n**Response:**\n- `200 OK`: Server is healthy\n- Returns: `{ ok: true, env: string, uptimeSeconds: number, timestamp: string }`"
+      }
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints for user registration, login, email verification, and password management.\n\n## Authentication Flow\n1. **Signup** - Create new user account\n2. **Verify Email** - Verify email address (token sent via email)\n3. **Signin** - Get access token and refresh token\n4. **Refresh Token** - Get new access token when expired\n5. **Logout** - Revoke refresh token\n\n## Password Management\n- **Forgot Password** - Request password reset email\n- **Reset Password** - Reset password with token from email\n- **Change Password** - Change password (requires authentication)\n\n## Security\n- Passwords are hashed with Argon2id\n- Access tokens expire in 15 minutes\n- Refresh tokens expire in 30 days\n- All tokens are stored as SHA-256 hashes in database",
+      "item": [
+        {
+          "name": "Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const jsonData = pm.response.json();",
+                  "    console.log('User created:', jsonData.user);",
+                  "    console.log('Check your email for verification token');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"whoYouAre\": \"Pharmacist\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+1234567890\",\n  \"password\": \"SecurePass123\",\n  \"countryOfPractice\": \"USA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "signup"]
+            },
+            "description": "Create a new user account.\n\n**Request Body:**\n- `firstName` (string, required): User's first name\n- `lastName` (string, required): User's last name\n- `whoYouAre` (string, required): User's profession/role description\n- `email` (string, required): Valid email address\n- `phoneNumber` (string, required): Phone number\n- `password` (string, required, min 8 chars): User password\n- `countryOfPractice` (string, required): Country where user practices\n\n**Response:**\n- `201 Created`: User created successfully\n- Returns: `{ user: { id, role, firstName, lastName, email, ... } }`\n- Verification email sent automatically (check Mailtrap or server logs)\n\n**Note:** Password is never returned in response. Email verification token is sent via email."
+          }
+        },
+        {
+          "name": "Signin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    console.log('Access Token saved:', jsonData.accessToken);",
+                  "    console.log('User:', jsonData.user);",
+                  "    console.log('Refresh token saved in cookie');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"SecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/signin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "signin"]
+            },
+            "description": "Sign in with email and password to get access and refresh tokens.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password\n\n**Response:**\n- `200 OK`: Sign in successful\n- Returns: `{ user: {...}, accessToken: string }`\n- Sets httpOnly `refreshToken` cookie (handled automatically by Postman)\n- Access token is automatically saved to collection variable `accessToken`\n\n**Error Responses:**\n- `401 Unauthorized`: Invalid email or password\n\n**Note:** Access token expires in 15 minutes. Use Refresh Token endpoint to get a new one."
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<token-from-email>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-email"]
+            },
+            "description": "Verify user's email address using the token sent via email.\n\n**Request Body:**\n- `token` (string, required): Verification token from email\n\n**Response:**\n- `200 OK`: Email verified successfully\n- Returns: `{ user: {...} }`\n- Sets `emailVerifiedAt` and `identityVerified=true`\n\n**Error Responses:**\n- `400 Bad Request`: Invalid, expired, or already used token\n\n**Note:**\n- Token expires in 24 hours\n- Token can only be used once\n- After verification, user's `identityVerified` is set to `true`"
+          }
+        },
+        {
+          "name": "Resend Verification Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/resend-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "resend-verification"]
+            },
+            "description": "Resend email verification token to user's email address.\n\n**Request Body:**\n- `email` (string, required): User's email address\n\n**Response:**\n- `202 Accepted`: Email sent if account exists and not already verified\n- Returns: `{ message: \"Verification email sent if account exists\" }`\n\n**Note:**\n- Always returns 202 to prevent email enumeration\n- Only sends email if account exists and email is not already verified\n- New token expires in 24 hours"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "forgot-password"]
+            },
+            "description": "Request a password reset email.\n\n**Request Body:**\n- `email` (string, required): User's email address\n\n**Response:**\n- `202 Accepted`: Email sent if account exists\n- Returns: `{ message: \"Password reset email sent if account exists\" }`\n\n**Note:**\n- Always returns 202 to prevent email enumeration\n- Reset token expires in 1 hour\n- Token can only be used once\n- Check Mailtrap inbox or server logs for reset link"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<reset-token-from-email>\",\n  \"newPassword\": \"NewSecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "reset-password"]
+            },
+            "description": "Reset password using token from forgot password email.\n\n**Request Body:**\n- `token` (string, required): Reset token from email\n- `newPassword` (string, required, min 8 chars): New password\n\n**Response:**\n- `200 OK`: Password reset successfully\n- Returns: `{ message: \"Password reset successfully\" }`\n\n**Error Responses:**\n- `400 Bad Request`: Invalid, expired, or already used token\n\n**Note:**\n- Token expires in 1 hour\n- Token can only be used once\n- After reset, user must sign in with new password"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123\",\n  \"newPassword\": \"NewSecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            },
+            "description": "Change user's password. Requires authentication.\n\n**Headers:**\n- `Authorization: Bearer <accessToken>` (required)\n\n**Request Body:**\n- `currentPassword` (string, required): Current password\n- `newPassword` (string, required, min 8 chars): New password\n\n**Response:**\n- `200 OK`: Password changed successfully\n- Returns: `{ message: \"Password changed successfully\" }`\n\n**Error Responses:**\n- `401 Unauthorized`: Missing or invalid access token\n- `401 Unauthorized`: Current password is incorrect\n\n**Note:** User must be authenticated. Access token is automatically included from collection variable."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    console.log('New Access Token saved:', jsonData.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token from cookie.\n\n**Request:**\n- No body required\n- Reads `refreshToken` from httpOnly cookie (handled automatically by Postman)\n\n**Response:**\n- `200 OK`: New access token issued\n- Returns: `{ accessToken: string }`\n- Sets new refresh token cookie (old one revoked, new one issued)\n- New access token automatically saved to collection variable\n\n**Error Responses:**\n- `400 Bad Request`: Refresh token not provided in cookie\n- `401 Unauthorized`: Invalid, expired, or revoked refresh token\n\n**Note:**\n- Refresh tokens are rotated on each use (old one revoked)\n- Access token expires in 15 minutes\n- Refresh token expires in 30 days"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Logout user by revoking refresh token.\n\n**Request:**\n- No body required\n- Reads `refreshToken` from httpOnly cookie (handled automatically by Postman)\n\n**Response:**\n- `200 OK`: Logged out successfully\n- Returns: `{ message: \"Logged out successfully\" }`\n- Clears refresh token cookie\n- Revokes refresh token in database\n\n**Note:**\n- Access token remains valid until it expires (15 minutes)\n- Refresh token is immediately revoked and cannot be used again"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,12 +1,15 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { pinoHttp } from "pino-http";
+import type { RequestHandler } from "express";
 
 import { corsOrigins, env, isProd } from "./config/env";
 import { logger } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { errorHandler } from "./middleware/error-handler";
+import { authRoutes } from "./modules/auth/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -34,6 +37,7 @@ export function createApp(): Express {
 
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+  app.use((cookieParser as unknown as () => RequestHandler)());
 
   app.get("/health", (_req, res) => {
     res.json({
@@ -43,6 +47,8 @@ export function createApp(): Express {
       timestamp: new Date().toISOString()
     });
   });
+
+  app.use("/api/v1/auth", authRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({

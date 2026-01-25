@@ -38,9 +38,11 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.9",
+    "@types/nodemailer": "^7.0.5",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.2",
     "pg": "^8.17.1",
