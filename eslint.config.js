@@ -6,7 +6,7 @@ const repoFiles = ["**/repo.ts", "**/repositories/**/*.ts"];
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "npm-cache/**"]
+    ignores: ["dist/**", "node_modules/**", "npm-cache/**", "scripts/**"]
   },
   js.configs.recommended,
   ...tseslint.configs.recommended.map((c) => ({ ...c, files: tsFiles })),
