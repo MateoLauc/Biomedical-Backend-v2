@@ -15,7 +15,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { db } from "../src/db/index.js";
 import { categories, products, productVariants } from "../src/db/schema/index.js";
-// Note: sql import not needed for this script
+import { sql } from "drizzle-orm";
 
 interface ParsedProduct {
   name: string;
@@ -125,15 +125,19 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
       }
     }
 
-    // Detect product names (Bioflex, Biomedical, Biogyl, Bioferex, Bioper, etc.)
+    // Detect product names - must start with brand names or be clearly product names
+    // Product names typically start with: Bioflex, Biomedical, Biogyl, Bioferex, Bioper, Excoff, Ipec, CAPD
+    // They should NOT be indication lines (which are usually lowercase or start with verbs)
     const isProductName =
       line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i) ||
       (line.length > 5 &&
         line.length < 80 &&
-        line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*(\s+(IV|Syrup|Solution|Tonic|Diaper|Sanitizer|Wash|Cough|Blood|Hand))?$/i) &&
-        !line.match(/^(Description|Composition|Indication|Pack size|Pack Size|Benefits|per|Per|Pack sizes|Pack sizes)/i) &&
+        line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*(\s+(IV|Syrup|Solution|Tonic|Diaper|Sanitizer|Wash|Cough|Blood|Hand|Baby))?$/i) &&
+        !line.match(/^(Description|Composition|Indication|Pack size|Pack Size|Benefits|per|Per|Pack sizes|Pack sizes|Correction|Rehydration|Source|Maintenance|Mild|Severe|Treatment|Management|Support|Fluid|Energy|Hypoglycemia|Hyperkalemia|Nutritional|Removal|Clearance|Patients|Continuous|Ambulatory|Prophylaxis|Systemic|Cryptococcal|Urinary|Respiratory|Anaerobic|Amoebiasis|Hypovolemia|Shock|Blood loss|Suitable|Surgery|Trauma)/i) &&
         !line.match(/^\d+%/) &&
-        !line.match(/^\d+\s*(mls|ml|g|kg)/));
+        !line.match(/^\d+\s*(mls|ml|g|kg)/) &&
+        !line.match(/^[a-z]/) && // Must start with capital
+        !line.match(/^(and|for|with|when|that|which|who|where|during|in|on|at|to|of|the|a|an)\s/i)); // Not starting with common words
 
     if (isProductName && currentCategory) {
       // Save previous product
@@ -272,15 +276,34 @@ async function seedProducts() {
           continue;
         }
 
-        const productSlug = slugify(productData.name);
-        console.log(`  📦 Creating product: ${productData.name} (${productSlug})`);
+        let productSlug = slugify(productData.name);
+        let slugSuffix = 1;
+        let finalSlug = productSlug;
+
+        // Check for duplicate slugs and append suffix if needed
+        while (true) {
+          const existing = await db
+            .select()
+            .from(products)
+            .where(sql`slug = ${finalSlug}`)
+            .limit(1);
+          
+          if (existing.length === 0) {
+            break; // Slug is unique
+          }
+          
+          finalSlug = `${productSlug}-${slugSuffix}`;
+          slugSuffix++;
+        }
+
+        console.log(`  📦 Creating product: ${productData.name} (${finalSlug})`);
 
         const [product] = await db
           .insert(products)
           .values({
             categoryId: category.id,
             name: productData.name,
-            slug: productSlug,
+            slug: finalSlug,
             description: productData.description || undefined,
             composition: productData.composition || undefined,
             indication: productData.indication || undefined,
