@@ -77,7 +77,8 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const nextLine = i < lines.length - 1 ? lines[i + 1] : "";
+    if (!line) continue;
+    const nextLine = i < lines.length - 1 ? lines[i + 1] ?? "" : "";
 
     // Skip header lines
     if (line.match(/^(product section layout|PRODUCTS|GENERAL OVERVIEW)$/i)) {
@@ -258,6 +259,11 @@ async function seedProducts() {
         })
         .returning();
 
+      if (!category) {
+        console.log(`  ⚠️  Failed to create category: ${catData.name}`);
+        continue;
+      }
+
       categoryMap.set(catData.name, category.id);
 
       // Create products for this category
@@ -285,6 +291,11 @@ async function seedProducts() {
             lowStockThreshold: 10
           })
           .returning();
+
+        if (!product) {
+          console.log(`    ⚠️  Failed to create product: ${productData.name}`);
+          continue;
+        }
 
         // Create product variants (pack sizes)
         for (const packSize of productData.packSizes) {
