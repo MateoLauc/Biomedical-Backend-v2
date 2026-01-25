@@ -28,6 +28,7 @@ interface ParsedProduct {
 interface ParsedCategory {
   name: string;
   description?: string;
+  parentCategoryName?: string; // For sub-categories
   products: ParsedProduct[];
 }
 
@@ -50,26 +51,33 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
   const categories: ParsedCategory[] = [];
   const lines = content.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
 
-  // Known category patterns from the file
-  const categoryPatterns = [
-    /^INTRAVENOUS\s+FLUIDS?/i,
-    /^SYRUPS?\s*&\s*SUSPENSIONS?/i,
-    /^COUGH\s*&\s*COLD/i,
-    /^ANTI\s+INFECTIVES?/i,
-    /^VITAMIN\s*&\s*SUPPLEMENT/i,
-    /^ANALGESICS?\s*&\s*ANTIPYRETICS?/i,
-    /^ANTACIDS?/i,
-    /^ANTIALLERGIES?/i,
-    /^BRONCHODIALATOR/i,
-    /^BLOOD\s+TONICS?/i,
-    /^HOUSE\s+HOLD\s+HYGIENE/i,
-    /^PERSONAL\s+CARE\s*&\s*HYGIENE/i,
-    /^FAST\s+SELLING\s+CONSUMER\s+GOODS/i,
-    /^DIAPER/i,
-    /^PERITONEAL\s+DIALYSIS\s+FLUIDS?/i,
-    /^CAPD/i
+  // Main categories (only 4-5 main categories)
+  const mainCategories = [
+    "INTRAVENOUS FLUID",
+    "SYRUPS & SUSPENSION",
+    "HOUSE HOLD HYGIENE",
+    "FAST SELLING CONSUMER GOODS"
   ];
 
+  // Sub-categories mapping: sub-category name -> parent category name
+  const subCategoryMap: Record<string, string> = {
+    "cough & cold": "SYRUPS & SUSPENSION",
+    "EXCOFF FOR CHILDREN": "SYRUPS & SUSPENSION",
+    "Anti Infectives": "SYRUPS & SUSPENSION",
+    "Vitamin & Supplement": "SYRUPS & SUSPENSION",
+    "Analgesics & Antipyretics": "SYRUPS & SUSPENSION",
+    "Antacids": "SYRUPS & SUSPENSION",
+    "Antiallergies": "SYRUPS & SUSPENSION",
+    "Bronchodialator": "SYRUPS & SUSPENSION",
+    "Blood Tonics": "SYRUPS & SUSPENSION",
+    "Personal care & hygiene": "HOUSE HOLD HYGIENE",
+    "Diaper": "FAST SELLING CONSUMER GOODS",
+    "Peritoneal Dialysis Fluids": "INTRAVENOUS FLUID"
+  };
+
+  const allCategoryNames = [...mainCategories, ...Object.keys(subCategoryMap)];
+
+  let currentMainCategory: string | null = null; // Track which main category we're in
   let currentCategory: ParsedCategory | null = null;
   let currentProduct: ParsedProduct | null = null;
   let currentSection: "description" | "composition" | "indication" | "packSize" | null = null;
@@ -85,11 +93,18 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
       continue;
     }
 
-    // Check if this is a category header
-    const isCategoryHeader = categoryPatterns.some((pattern) => pattern.test(line)) ||
-      (line === line.toUpperCase() && line.length > 5 && line.length < 50 && !line.match(/\d/));
+    // Check if this is a main category header
+    const isMainCategory = mainCategories.some((cat) => 
+      line.trim().toUpperCase() === cat.toUpperCase()
+    );
 
-    if (isCategoryHeader) {
+    // Check if this is a sub-category header
+    const isSubCategory = Object.keys(subCategoryMap).some((subCat) => 
+      line.trim().toLowerCase() === subCat.toLowerCase() ||
+      line.trim().toUpperCase() === subCat.toUpperCase()
+    );
+
+    if (isMainCategory) {
       // Save previous category
       if (currentCategory) {
         if (currentProduct) {
@@ -101,9 +116,39 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
         }
       }
 
-      // Start new category
+      // Start new main category
+      currentMainCategory = line.trim().toUpperCase();
       currentCategory = {
         name: line,
+        products: []
+      };
+      categoryDescriptionLines = [];
+      currentProduct = null;
+      currentSection = null;
+      continue;
+    }
+
+    if (isSubCategory) {
+      // Save previous category
+      if (currentCategory) {
+        if (currentProduct) {
+          currentCategory.products.push(currentProduct);
+          currentProduct = null;
+        }
+        if (currentCategory.products.length > 0) {
+          categories.push(currentCategory);
+        }
+      }
+
+      // Start new sub-category
+      const subCatName = Object.keys(subCategoryMap).find((subCat) => 
+        line.trim().toLowerCase() === subCat.toLowerCase() ||
+        line.trim().toUpperCase() === subCat.toUpperCase()
+      ) || line;
+
+      currentCategory = {
+        name: line,
+        parentCategoryName: subCategoryMap[subCatName],
         products: []
       };
       categoryDescriptionLines = [];
@@ -125,19 +170,13 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
       }
     }
 
-    // Detect product names - must start with brand names or be clearly product names
-    // Product names typically start with: Bioflex, Biomedical, Biogyl, Bioferex, Bioper, Excoff, Ipec, CAPD
-    // They should NOT be indication lines (which are usually lowercase or start with verbs)
+    // Detect product names - must start with brand names
+    // Product names ALWAYS start with: Bioflex, Biomedical, Biogyl, Bioferex, Bioper, Excoff, Ipec, CAPD
+    // They should NOT be indication lines, descriptions, or other content
     const isProductName =
-      line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i) ||
-      (line.length > 5 &&
-        line.length < 80 &&
-        line.match(/^[A-Z][a-z]+(\s+[A-Z][a-z]+)*(\s+(IV|Syrup|Solution|Tonic|Diaper|Sanitizer|Wash|Cough|Blood|Hand|Baby))?$/i) &&
-        !line.match(/^(Description|Composition|Indication|Pack size|Pack Size|Benefits|per|Per|Pack sizes|Pack sizes|Correction|Rehydration|Source|Maintenance|Mild|Severe|Treatment|Management|Support|Fluid|Energy|Hypoglycemia|Hyperkalemia|Nutritional|Removal|Clearance|Patients|Continuous|Ambulatory|Prophylaxis|Systemic|Cryptococcal|Urinary|Respiratory|Anaerobic|Amoebiasis|Hypovolemia|Shock|Blood loss|Suitable|Surgery|Trauma)/i) &&
-        !line.match(/^\d+%/) &&
-        !line.match(/^\d+\s*(mls|ml|g|kg)/) &&
-        !line.match(/^[a-z]/) && // Must start with capital
-        !line.match(/^(and|for|with|when|that|which|who|where|during|in|on|at|to|of|the|a|an)\s/i)); // Not starting with common words
+      line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i) &&
+      !line.match(/^(Description|Composition|Indication|Pack size|Pack Size|Benefits)/i) &&
+      line.length < 100;
 
     if (isProductName && currentCategory) {
       // Save previous product
@@ -248,17 +287,20 @@ async function seedProducts() {
     // Seed categories and products
     const categoryMap = new Map<string, string>(); // category name -> category id
 
+    // First pass: Create all main categories
     for (const catData of parsedCategories) {
-      // Create category
+      if (catData.parentCategoryName) continue; // Skip sub-categories for now
+
       const categorySlug = slugify(catData.name);
-      console.log(`📁 Creating category: ${catData.name} (${categorySlug})`);
+      console.log(`📁 Creating main category: ${catData.name} (${categorySlug})`);
 
       const [category] = await db
         .insert(categories)
         .values({
           name: catData.name,
           slug: categorySlug,
-          description: catData.description || undefined
+          description: catData.description || undefined,
+          parentCategoryId: null
         })
         .returning();
 
@@ -268,6 +310,46 @@ async function seedProducts() {
       }
 
       categoryMap.set(catData.name, category.id);
+    }
+
+    // Second pass: Create sub-categories with parent references
+    for (const catData of parsedCategories) {
+      if (!catData.parentCategoryName) continue; // Skip main categories
+
+      const parentId = categoryMap.get(catData.parentCategoryName);
+      if (!parentId) {
+        console.log(`  ⚠️  Parent category not found for: ${catData.name} (parent: ${catData.parentCategoryName})`);
+        continue;
+      }
+
+      const categorySlug = slugify(catData.name);
+      console.log(`📁 Creating sub-category: ${catData.name} (${categorySlug}) under ${catData.parentCategoryName}`);
+
+      const [category] = await db
+        .insert(categories)
+        .values({
+          name: catData.name,
+          slug: categorySlug,
+          description: catData.description || undefined,
+          parentCategoryId: parentId
+        })
+        .returning();
+
+      if (!category) {
+        console.log(`  ⚠️  Failed to create sub-category: ${catData.name}`);
+        continue;
+      }
+
+      categoryMap.set(catData.name, category.id);
+    }
+
+    // Third pass: Create products (they can belong to main or sub-categories)
+    for (const catData of parsedCategories) {
+      const categoryId = categoryMap.get(catData.name);
+      if (!categoryId) {
+        console.log(`  ⚠️  Category not found: ${catData.name}`);
+        continue;
+      }
 
       // Create products for this category
       for (const productData of catData.products) {
