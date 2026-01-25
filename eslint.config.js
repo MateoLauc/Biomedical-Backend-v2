@@ -31,6 +31,18 @@ export default [
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true }
       ]
     }
+  },
+  {
+    // Disable strict type-checking for repo files that use Drizzle ORM
+    // Drizzle's complex generic types cause false positives with TypeScript's compiler diagnostics
+    files: ["**/repo.ts", "**/repositories/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-call": "off"
+    }
   }
 ];
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/restrict-template-expressions */
 import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { categories, products, productVariants } from "../../db/schema";
@@ -12,13 +11,11 @@ export const productsRepo = {
   },
 
   async findCategoryById(id: string): Promise<Category | null> {
-    // @ts-expect-error - Drizzle's eq() type inference includes 'any' in union, but TypeScript compiles correctly
     const [category] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
     return (category as Category) || null;
   },
 
   async findCategoryBySlug(slug: string): Promise<Category | null> {
-    // @ts-expect-error - Drizzle's eq() type inference includes 'any' in union, but TypeScript compiles correctly
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
     return (category as Category) || null;
   },
@@ -47,13 +44,11 @@ export const productsRepo = {
   },
 
   async findProductById(id: string): Promise<Product | null> {
-    // @ts-expect-error - Drizzle's eq() type inference includes 'any' in union, but TypeScript compiles correctly
     const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
     return (product as Product) || null;
   },
 
   async findProductBySlug(slug: string): Promise<Product | null> {
-    // @ts-expect-error - Drizzle's eq() type inference includes 'any' in union, but TypeScript compiles correctly
     const [product] = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
     return (product as Product) || null;
   },
@@ -140,7 +135,6 @@ export const productsRepo = {
   },
 
   async findProductVariantById(id: string): Promise<ProductVariant | null> {
-    // @ts-expect-error - Drizzle's eq() type inference includes 'any' in union, but TypeScript compiles correctly
     const [variant] = await db.select().from(productVariants).where(eq(productVariants.id, id)).limit(1);
     return (variant as ProductVariant) || null;
   },
