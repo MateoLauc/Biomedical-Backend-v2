@@ -20,11 +20,14 @@ export const productsService = {
       throw badRequest("A category with this name already exists.");
     }
 
-    const category = await productsRepo.createCategory({
+    const categoryData: CategoryInput = {
       name: input.name.trim(),
-      slug,
-      description: input.description?.trim()
-    });
+      slug
+    };
+    if (input.description) {
+      categoryData.description = input.description.trim();
+    }
+    const category = await productsRepo.createCategory(categoryData);
 
     return {
       id: category.id,
@@ -90,17 +93,24 @@ export const productsService = {
       throw badRequest("A product with this name already exists.");
     }
 
-    const product = await productsRepo.createProduct({
+    const productData: ProductInput = {
       categoryId: input.categoryId,
       name: input.name.trim(),
       slug,
-      description: input.description?.trim(),
-      composition: input.composition?.trim(),
-      indication: input.indication?.trim(),
       requiresApproval: input.requiresApproval,
       stockQuantity: input.stockQuantity ?? 0,
       lowStockThreshold: input.lowStockThreshold ?? 10
-    });
+    };
+    if (input.description) {
+      productData.description = input.description.trim();
+    }
+    if (input.composition) {
+      productData.composition = input.composition.trim();
+    }
+    if (input.indication) {
+      productData.indication = input.indication.trim();
+    }
+    const product = await productsRepo.createProduct(productData);
 
     return {
       id: product.id,
@@ -140,19 +150,44 @@ export const productsService = {
     const limit = options?.limit ?? 20;
     const offset = (page - 1) * limit;
 
+    const listOptions: {
+      categoryId?: string;
+      isActive?: boolean;
+      requiresApproval?: boolean;
+      limit?: number;
+      offset?: number;
+    } = {
+      limit,
+      offset
+    };
+    if (options?.categoryId) {
+      listOptions.categoryId = options.categoryId;
+    }
+    if (options?.isActive !== undefined) {
+      listOptions.isActive = options.isActive;
+    }
+    if (options?.requiresApproval !== undefined) {
+      listOptions.requiresApproval = options.requiresApproval;
+    }
+
+    const countOptions: {
+      categoryId?: string;
+      isActive?: boolean;
+      requiresApproval?: boolean;
+    } = {};
+    if (options?.categoryId) {
+      countOptions.categoryId = options.categoryId;
+    }
+    if (options?.isActive !== undefined) {
+      countOptions.isActive = options.isActive;
+    }
+    if (options?.requiresApproval !== undefined) {
+      countOptions.requiresApproval = options.requiresApproval;
+    }
+
     const [items, total] = await Promise.all([
-      productsRepo.listProducts({
-        categoryId: options?.categoryId,
-        isActive: options?.isActive,
-        requiresApproval: options?.requiresApproval,
-        limit,
-        offset
-      }),
-      productsRepo.countProducts({
-        categoryId: options?.categoryId,
-        isActive: options?.isActive,
-        requiresApproval: options?.requiresApproval
-      })
+      productsRepo.listProducts(listOptions),
+      productsRepo.countProducts(countOptions)
     ]);
 
     // Fetch categories and variants for each product

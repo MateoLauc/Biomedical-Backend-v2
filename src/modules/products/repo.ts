@@ -60,8 +60,6 @@ export const productsRepo = {
     limit?: number;
     offset?: number;
   }): Promise<Product[]> {
-    let query = db.select().from(products);
-
     const conditions = [];
     if (options?.categoryId) {
       conditions.push(eq(products.categoryId, options.categoryId));
@@ -73,17 +71,19 @@ export const productsRepo = {
       conditions.push(eq(products.requiresApproval, options.requiresApproval));
     }
 
+    let query = db.select().from(products);
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as typeof query;
     }
 
-    query = query.orderBy(desc(products.createdAt));
+    query = query.orderBy(desc(products.createdAt)) as typeof query;
 
     if (options?.limit) {
-      query = query.limit(options.limit);
+      query = query.limit(options.limit) as typeof query;
     }
     if (options?.offset) {
-      query = query.offset(options.offset);
+      query = query.offset(options.offset) as typeof query;
     }
 
     return (await query) as Product[];
@@ -94,8 +94,6 @@ export const productsRepo = {
     isActive?: boolean;
     requiresApproval?: boolean;
   }): Promise<number> {
-    let query = db.select({ count: sql<number>`count(*)` }).from(products);
-
     const conditions = [];
     if (options?.categoryId) {
       conditions.push(eq(products.categoryId, options.categoryId));
@@ -106,6 +104,8 @@ export const productsRepo = {
     if (options?.requiresApproval !== undefined) {
       conditions.push(eq(products.requiresApproval, options.requiresApproval));
     }
+
+    let query = db.select({ count: sql<number>`count(*)` }).from(products);
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as typeof query;
