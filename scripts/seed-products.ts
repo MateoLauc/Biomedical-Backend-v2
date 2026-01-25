@@ -104,7 +104,6 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
       // Start new category
       currentCategory = {
         name: line,
-        description: undefined,
         products: []
       };
       categoryDescriptionLines = [];
@@ -298,21 +297,23 @@ async function seedProducts() {
         }
 
         // Create product variants (pack sizes)
-        for (const packSize of productData.packSizes) {
-          if (!packSize.trim()) continue;
+        if (product) {
+          for (const packSize of productData.packSizes) {
+            if (!packSize.trim()) continue;
 
-          // Set placeholder price (0.00) - you'll need to update these manually
-          const price = "0.00";
+            // Set placeholder price (0.00) - you'll need to update these manually
+            const price = "0.00";
 
-          await db.insert(productVariants).values({
-            productId: product.id,
-            packSize: packSize.trim(),
-            price,
-            stockQuantity: 0, // Default stock, can be updated later
-            isActive: true
-          });
+            await db.insert(productVariants).values({
+              productId: product.id,
+              packSize: packSize.trim(),
+              price,
+              stockQuantity: 0, // Default stock, can be updated later
+              isActive: true
+            });
 
-          console.log(`    ✓ Variant: ${packSize.trim()} (Price: $${price})`);
+            console.log(`    ✓ Variant: ${packSize.trim()} (Price: $${price})`);
+          }
         }
       }
       console.log("");
