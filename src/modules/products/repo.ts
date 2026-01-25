@@ -11,14 +11,12 @@ export const productsRepo = {
   },
 
   async findCategoryById(id: string): Promise<Category | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: Category[] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+    const result = (await db.select().from(categories).where(eq(categories.id, id)).limit(1)) as Category[];
     return result[0] || null;
   },
 
   async findCategoryBySlug(slug: string): Promise<Category | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: Category[] = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
+    const result = (await db.select().from(categories).where(eq(categories.slug, slug)).limit(1)) as Category[];
     return result[0] || null;
   },
 
@@ -46,14 +44,12 @@ export const productsRepo = {
   },
 
   async findProductById(id: string): Promise<Product | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: Product[] = await db.select().from(products).where(eq(products.id, id)).limit(1);
+    const result = (await db.select().from(products).where(eq(products.id, id)).limit(1)) as Product[];
     return result[0] || null;
   },
 
   async findProductBySlug(slug: string): Promise<Product | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: Product[] = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
+    const result = (await db.select().from(products).where(eq(products.slug, slug)).limit(1)) as Product[];
     return result[0] || null;
   },
 
@@ -139,8 +135,7 @@ export const productsRepo = {
   },
 
   async findProductVariantById(id: string): Promise<ProductVariant | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const result: ProductVariant[] = await db.select().from(productVariants).where(eq(productVariants.id, id)).limit(1);
+    const result = (await db.select().from(productVariants).where(eq(productVariants.id, id)).limit(1)) as ProductVariant[];
     return result[0] || null;
   },
 
