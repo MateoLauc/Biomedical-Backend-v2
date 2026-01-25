@@ -24,10 +24,16 @@ function toPublicUser(user: typeof users.$inferSelect): PublicUser {
 export const authService = {
   async signup(input: SignupInput): Promise<{ user: PublicUser; verificationToken: string }> {
     const emailLower = input.email.toLowerCase().trim();
+    const phoneNumber = input.phoneNumber.trim();
 
-    const existing = await authRepo.findUserByEmail(emailLower);
-    if (existing) {
-      throw badRequest("Email already registered");
+    const existingByEmail = await authRepo.findUserByEmail(emailLower);
+    if (existingByEmail) {
+      throw badRequest("This email address is already registered. Please use a different email or sign in.");
+    }
+
+    const existingByPhone = await authRepo.findUserByPhoneNumber(phoneNumber);
+    if (existingByPhone) {
+      throw badRequest("This phone number is already registered. Please use a different phone number or sign in.");
     }
 
     const passwordHash = await hashPassword(input.password);
@@ -38,7 +44,7 @@ export const authService = {
       whoYouAre: input.whoYouAre.trim(),
       email: input.email.trim(),
       emailLower,
-      phoneNumber: input.phoneNumber.trim(),
+      phoneNumber,
       countryOfPractice: input.countryOfPractice.trim(),
       passwordHash
     });
@@ -63,12 +69,12 @@ export const authService = {
 
     const user = await authRepo.findUserByEmail(emailLower);
     if (!user) {
-      throw unauthorized("Invalid email or password");
+      throw unauthorized("The email or password you entered is incorrect. Please try again.");
     }
 
     const isValid = await verifyPassword(input.password, user.passwordHash);
     if (!isValid) {
-      throw unauthorized("Invalid email or password");
+      throw unauthorized("The email or password you entered is incorrect. Please try again.");
     }
 
     const accessToken = await generateAccessToken({
@@ -111,15 +117,15 @@ export const authService = {
     const tokenRecord = await authRepo.findEmailVerificationTokenByHash(tokenHash);
 
     if (!tokenRecord) {
-      throw badRequest("Invalid or expired verification token");
+      throw badRequest("This verification link is invalid or has expired. Please request a new verification email.");
     }
 
     if (new Date() > tokenRecord.expiresAt) {
-      throw badRequest("Verification token has expired");
+      throw badRequest("This verification link has expired. Please request a new verification email.");
     }
 
     if (tokenRecord.usedAt) {
-      throw badRequest("Verification token already used");
+      throw badRequest("This verification link has already been used. Please sign in to your account.");
     }
 
     await authRepo.markEmailVerificationTokenUsed(tokenRecord.id);
@@ -127,7 +133,7 @@ export const authService = {
 
     const user = await authRepo.findUserById(tokenRecord.userId);
     if (!user) {
-      throw notFound("User not found");
+      throw notFound("We couldn't find your account. Please check your information and try again.");
     }
 
     return toPublicUser(user);
@@ -184,15 +190,15 @@ export const authService = {
     const tokenRecord = await authRepo.findPasswordResetTokenByHash(tokenHash);
 
     if (!tokenRecord) {
-      throw badRequest("Invalid or expired reset token");
+      throw badRequest("This password reset link is invalid or has expired. Please request a new password reset email.");
     }
 
     if (new Date() > tokenRecord.expiresAt) {
-      throw badRequest("Reset token has expired");
+      throw badRequest("This password reset link has expired. Please request a new password reset email.");
     }
 
     if (tokenRecord.usedAt) {
-      throw badRequest("Reset token already used");
+      throw badRequest("This password reset link has already been used. Please request a new one if you still need to reset your password.");
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -203,12 +209,12 @@ export const authService = {
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
     const user = await authRepo.findUserById(userId);
     if (!user) {
-      throw notFound("User not found");
+      throw notFound("We couldn't find your account. Please check your information and try again.");
     }
 
     const isValid = await verifyPassword(currentPassword, user.passwordHash);
     if (!isValid) {
-      throw unauthorized("Current password is incorrect");
+      throw unauthorized("Your current password is incorrect. Please try again.");
     }
 
     const passwordHash = await hashPassword(newPassword);
@@ -221,24 +227,24 @@ export const authService = {
     const tokenRecord = await authRepo.findRefreshTokenByHash(tokenHash);
 
     if (!tokenRecord) {
-      throw unauthorized("Invalid refresh token");
+      throw unauthorized("Your session has expired. Please sign in again.");
     }
 
     if (tokenRecord.id !== payload.tokenId) {
-      throw unauthorized("Invalid refresh token");
+      throw unauthorized("Your session has expired. Please sign in again.");
     }
 
     if (new Date() > tokenRecord.expiresAt) {
-      throw unauthorized("Refresh token has expired");
+      throw unauthorized("Your session has expired. Please sign in again.");
     }
 
     if (tokenRecord.revokedAt) {
-      throw unauthorized("Refresh token has been revoked");
+      throw unauthorized("Your session has been ended. Please sign in again.");
     }
 
     const user = await authRepo.findUserById(payload.userId);
     if (!user) {
-      throw notFound("User not found");
+      throw notFound("We couldn't find your account. Please check your information and try again.");
     }
 
     const newAccessToken = await generateAccessToken({

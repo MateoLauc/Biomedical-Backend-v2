@@ -52,7 +52,7 @@ export function createApp(): Express {
 
   app.use((_req, res) => {
     res.status(404).json({
-      error: { code: "NOT_FOUND", message: "Route not found" }
+      error: { code: "NOT_FOUND", message: "The page you're looking for doesn't exist." }
     });
   });
 

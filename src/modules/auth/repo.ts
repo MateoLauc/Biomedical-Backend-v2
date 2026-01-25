@@ -27,6 +27,11 @@ export const authRepo = {
     return (user as User) || null;
   },
 
+  async findUserByPhoneNumber(phoneNumber: string): Promise<User | null> {
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber)).limit(1);
+    return (user as User) || null;
+  },
+
   async findUserById(id: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return (user as User) || null;

@@ -16,7 +16,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw unauthorized("Missing or invalid authorization header");
+      throw unauthorized("Please sign in to access this resource.");
     }
 
     const token = authHeader.substring(7);
@@ -37,11 +37,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 export function requireRole(...allowedRoles: Array<"super_admin" | "admin" | "customer">) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return next(unauthorized("Authentication required"));
+      return next(unauthorized("Please sign in to continue."));
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      return next(forbidden("Insufficient permissions"));
+      return next(forbidden("You don't have permission to perform this action."));
     }
 
     next();
@@ -50,11 +50,11 @@ export function requireRole(...allowedRoles: Array<"super_admin" | "admin" | "cu
 
 export function requireEmailVerified(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
-    return next(unauthorized("Authentication required"));
+    return next(unauthorized("Please sign in to continue."));
   }
 
   if (!req.user.emailVerified) {
-    return next(forbidden("Email verification required"));
+    return next(forbidden("Please verify your email address to continue."));
   }
 
   next();

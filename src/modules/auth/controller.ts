@@ -37,36 +37,36 @@ export const authController = {
   async resendVerificationEmail(req: Request, res: Response) {
     const body = req.body as { email: string };
     await authService.resendVerificationEmail(body.email);
-    res.status(202).json({ message: "Verification email sent if account exists" });
+    res.status(202).json({ message: "If an account exists with this email, a verification link has been sent." });
   },
 
   async forgotPassword(req: Request, res: Response) {
     const body = req.body as { email: string };
     await authService.forgotPassword(body.email);
-    res.status(202).json({ message: "Password reset email sent if account exists" });
+    res.status(202).json({ message: "If an account exists with this email, a password reset link has been sent." });
   },
 
   async resetPassword(req: Request, res: Response) {
     const body = req.body as { token: string; newPassword: string };
     await authService.resetPassword(body.token, body.newPassword);
-    res.json({ message: "Password reset successfully" });
+    res.json({ message: "Your password has been reset successfully. You can now sign in with your new password." });
   },
 
   async changePassword(req: Request, res: Response) {
     const userId = (req as Request & { user?: { userId: string } }).user?.userId;
     if (!userId) {
-      throw badRequest("User not authenticated");
+      throw badRequest("Please sign in to continue.");
     }
 
     const body = req.body as { currentPassword: string; newPassword: string };
     await authService.changePassword(userId, body.currentPassword, body.newPassword);
-    res.json({ message: "Password changed successfully" });
+    res.json({ message: "Your password has been changed successfully." });
   },
 
   async refreshToken(req: Request, res: Response) {
     const refreshToken = req.cookies.refreshToken as string | undefined;
     if (!refreshToken) {
-      throw badRequest("Refresh token not provided");
+      throw badRequest("Your session has expired. Please sign in again.");
     }
 
     const ip = req.ip || req.socket.remoteAddress || undefined;
@@ -91,6 +91,6 @@ export const authController = {
     }
 
     res.clearCookie("refreshToken");
-    res.json({ message: "Logged out successfully" });
+    res.json({ message: "You have been signed out successfully." });
   }
 };
