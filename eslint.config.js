@@ -2,19 +2,20 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 const tsFiles = ["**/*.ts"];
-
-const tsFiles = ["**/*.ts"];
 const repoFiles = ["**/repo.ts", "**/repositories/**/*.ts"];
-const nonRepoFiles = tsFiles.filter((f) => !repoFiles.includes(f));
 
 export default [
   {
     ignores: ["dist/**", "node_modules/**", "npm-cache/**"]
   },
   js.configs.recommended,
-  // Apply type-checked rules only to non-repo files
   ...tseslint.configs.recommended.map((c) => ({ ...c, files: tsFiles })),
-  ...tseslint.configs.recommendedTypeChecked.map((c) => ({ ...c, files: nonRepoFiles })),
+  // Exclude repo files from type-checked rules to avoid false positives with Drizzle's complex generics
+  ...tseslint.configs.recommendedTypeChecked.map((c) => ({
+    ...c,
+    files: tsFiles,
+    ignores: repoFiles
+  })),
   {
     files: tsFiles,
     languageOptions: {
