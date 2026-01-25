@@ -146,9 +146,10 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
         line.trim().toUpperCase() === subCat.toUpperCase()
       ) || line;
 
+      const parentName = subCategoryMap[subCatName];
       currentCategory = {
         name: line,
-        parentCategoryName: subCategoryMap[subCatName],
+        ...(parentName && { parentCategoryName: parentName }),
         products: []
       };
       categoryDescriptionLines = [];
@@ -383,7 +384,7 @@ async function seedProducts() {
         const [product] = await db
           .insert(products)
           .values({
-            categoryId: category.id,
+            categoryId: categoryId,
             name: productData.name,
             slug: finalSlug,
             description: productData.description || undefined,
