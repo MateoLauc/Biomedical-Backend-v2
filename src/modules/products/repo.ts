@@ -12,12 +12,12 @@ export const productsRepo = {
 
   async findCategoryById(id: string): Promise<Category | null> {
     const [category] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
-    return (category as Category) || null;
+    return category || null;
   },
 
   async findCategoryBySlug(slug: string): Promise<Category | null> {
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug)).limit(1);
-    return (category as Category) || null;
+    return category || null;
   },
 
   async listCategories(): Promise<Category[]> {
@@ -45,12 +45,12 @@ export const productsRepo = {
 
   async findProductById(id: string): Promise<Product | null> {
     const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
-    return (product as Product) || null;
+    return product || null;
   },
 
   async findProductBySlug(slug: string): Promise<Product | null> {
     const [product] = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
-    return (product as Product) || null;
+    return product || null;
   },
 
   async listProducts(options?: {
@@ -136,7 +136,7 @@ export const productsRepo = {
 
   async findProductVariantById(id: string): Promise<ProductVariant | null> {
     const [variant] = await db.select().from(productVariants).where(eq(productVariants.id, id)).limit(1);
-    return (variant as ProductVariant) || null;
+    return variant || null;
   },
 
   async findProductVariantsByProductId(productId: string): Promise<ProductVariant[]> {
