@@ -13,8 +13,36 @@ export type CartItemUpdate = {
   quantity: number;
 };
 
-export type CartItemWithDetails = CartItem & {
-  productVariant: ProductVariant & {
-    product: Product;
+export type CartItemWithDetails = {
+  id: string;
+  userId: string;
+  productVariantId: string;
+  quantity: number;
+  createdAt: Date;
+  updatedAt: Date;
+  productVariant: {
+    id: string;
+    productId: string;
+    packSize: string;
+    price: string;
+    stockQuantity: number;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    product: {
+      id: string;
+      categoryId: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      composition: string | null;
+      indication: string | null;
+      requiresApproval: boolean;
+      isActive: boolean;
+      stockQuantity: number;
+      lowStockThreshold: number;
+      createdAt: Date;
+      updatedAt: Date;
+    };
   };
 };
