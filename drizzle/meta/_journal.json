@@ -6,21 +6,21 @@
       "idx": 0,
       "version": "7",
       "when": 1768902673974,
-      "tag": "0000_smiling_scrambler",
+      "tag": "0000_initial_auth_tables",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
       "when": 1769359898381,
-      "tag": "0001_parallel_vindicator",
+      "tag": "0001_products_cart_shipping_tables",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
       "when": 1769362701877,
-      "tag": "0002_harsh_captain_cross",
+      "tag": "0002_add_parent_category_id",
       "breakpoints": true
     }
   ]

@@ -1,5 +1,5 @@
 import { shippingRepo } from "./repo";
-import { notFound, forbidden } from "../../lib/http-errors";
+import { notFound } from "../../lib/http-errors";
 import type { ShippingAddressInput, ShippingAddressUpdate } from "./types";
 
 export const shippingService = {

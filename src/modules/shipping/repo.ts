@@ -1,4 +1,4 @@
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "../../db";
 import { shippingAddresses } from "../../db/schema";
 import type { ShippingAddress, ShippingAddressInput, ShippingAddressUpdate } from "./types";
