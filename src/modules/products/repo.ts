@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, asc } from "drizzle-orm";
 import { db } from "../../db";
 import { categories, products, productVariants } from "../../db/schema";
 import type { Category, Product, ProductVariant, CategoryInput, ProductInput, ProductVariantInput } from "./types";
@@ -21,7 +21,17 @@ export const productsRepo = {
   },
 
   async listCategories(): Promise<Category[]> {
-    return (await db.select().from(categories).orderBy(categories.name)) as Category[];
+    return (await db.select().from(categories).orderBy(asc(categories.name))) as Category[];
+  },
+
+  async findSubCategoriesByParentId(parentId: string): Promise<Category[]> {
+    const subCategories = await db.select().from(categories).where(eq(categories.parentCategoryId, parentId)).orderBy(asc(categories.name));
+    return subCategories as Category[];
+  },
+
+  async findSubCategoriesByParentId(parentId: string): Promise<Category[]> {
+    const subCategories = await db.select().from(categories).where(eq(categories.parentCategoryId, parentId)).orderBy(categories.name);
+    return subCategories as Category[];
   },
 
   async updateCategory(id: string, data: Partial<CategoryInput>): Promise<Category> {

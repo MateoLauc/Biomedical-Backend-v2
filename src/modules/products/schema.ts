@@ -51,6 +51,7 @@ export const updateProductVariantSchema = z.object({
 
 export const listProductsQuerySchema = z.object({
   categoryId: z.string().uuid("Invalid category ID.").optional(),
+  subCategoryId: z.string().uuid("Invalid sub-category ID.").optional(), // Alias for categoryId to make it clearer
   isActive: z.string().transform((val) => val === "true").optional(),
   requiresApproval: z.string().transform((val) => val === "true").optional(),
   page: z.string().transform((val) => parseInt(val, 10)).pipe(z.number().int().min(1, "Page must be 1 or greater.")).optional(),
