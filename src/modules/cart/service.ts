@@ -7,8 +7,8 @@ import type { CartItemInput, CartItemUpdate, CartItemWithDetails } from "./types
 
 export const cartService = {
   async getCart(userId: string): Promise<{ items: CartItemWithDetails[]; totalItems: number }> {
-    const items = await cartRepo.getCartItemsWithDetails(userId);
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const items: CartItemWithDetails[] = await cartRepo.getCartItemsWithDetails(userId);
+    const totalItems: number = items.reduce((sum, item) => sum + item.quantity, 0);
     return { items, totalItems };
   },
 

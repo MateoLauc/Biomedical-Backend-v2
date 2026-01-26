@@ -62,7 +62,7 @@ export const cartRepo = {
       .where(eq(cartItems.userId, userId))
       .orderBy(desc(cartItems.createdAt));
 
-    return items.map((item) => ({
+    const mappedItems: CartItemWithDetails[] = items.map((item) => ({
       id: item.id,
       userId: item.userId,
       productVariantId: item.productVariantId,
@@ -94,7 +94,9 @@ export const cartRepo = {
           updatedAt: item.productUpdatedAt
         }
       }
-    })) as CartItemWithDetails[];
+    }));
+    
+    return mappedItems;
   },
 
   async createCartItem(userId: string, data: CartItemInput): Promise<CartItem> {
