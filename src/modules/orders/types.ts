@@ -9,6 +9,7 @@ export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type CreateOrderInput = {
   shippingAddressId: string;
   notes?: string;
+  callbackUrl?: string; // Optional callback URL for Paystack redirect
 };
 
 export type UpdateOrderStatusInput = {

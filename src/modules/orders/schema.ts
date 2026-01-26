@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const createOrderSchema = z.object({
   shippingAddressId: z.string().uuid("Invalid shipping address ID."),
-  notes: z.string().max(1000, "Notes cannot exceed 1000 characters.").optional()
+  notes: z.string().max(1000, "Notes cannot exceed 1000 characters.").optional(),
+  callbackUrl: z.string().url("Invalid callback URL.").optional()
 });
 
 export const updateOrderStatusSchema = z.object({

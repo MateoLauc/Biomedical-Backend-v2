@@ -1,8 +1,10 @@
 import { ordersRepo } from "./repo";
 import { cartRepo } from "../cart/repo";
 import { shippingRepo } from "../shipping/repo";
+import { authRepo } from "../auth/repo";
 import { canPurchaseProduct } from "../../lib/policies/purchase-policy";
-import { badRequest, notFound, forbidden } from "../../lib/http-errors";
+import { initializePayment, verifyPayment } from "../../lib/payments/paystack";
+import { badRequest, notFound, forbidden, unauthorized } from "../../lib/http-errors";
 import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput, OrderWithItems } from "./types";
 import type { PublicUser } from "../auth/types";
 
@@ -18,7 +20,7 @@ function generateOrderNumber(): string {
 }
 
 export const ordersService = {
-  async createOrderFromCart(userId: string, input: CreateOrderInput, user: PublicUser): Promise<{ order: OrderWithItems; paymentReference: string }> {
+  async createOrderFromCart(userId: string, input: CreateOrderInput, user: PublicUser): Promise<{ order: OrderWithItems; paymentReference: string; authorizationUrl: string }> {
     // Get user's cart
     const cartItems = await cartRepo.getCartItemsWithDetails(userId);
     if (cartItems.length === 0) {
@@ -119,23 +121,64 @@ export const ordersService = {
       });
     }
 
-    // Generate payment reference (will be used with Paystack)
-    const paymentReference = order.id.substring(0, 8).toUpperCase() + "-" + Date.now().toString(36).toUpperCase();
-    await ordersRepo.setPaymentReference(order.id, paymentReference);
+    // Get user email for Paystack
+    const userRecord = await authRepo.findUserById(userId);
+    if (!userRecord) {
+      throw notFound("User not found.");
+    }
+
+    // Initialize Paystack payment
+    const amountInKobo = Math.round(total * 100); // Convert to kobo (smallest currency unit)
+    const paymentReference = order.orderNumber; // Use order number as payment reference
+
+    try {
+      const paymentInitData: {
+        email: string;
+        amount: number;
+        reference: string;
+        callback_url?: string;
+        metadata: {
+          orderId: string;
+          userId: string;
+          orderNumber: string;
+        };
+      } = {
+        email: userRecord.email,
+        amount: amountInKobo,
+        reference: paymentReference,
+        metadata: {
+          orderId: order.id,
+          userId: userId,
+          orderNumber: order.orderNumber
+        }
+      };
+      if (input.callbackUrl) {
+        paymentInitData.callback_url = input.callbackUrl;
+      }
+      const paymentInit = await initializePayment(paymentInitData);
+
+      // Store payment reference
+      await ordersRepo.setPaymentReference(order.id, paymentReference);
 
     // Clear cart after successful order creation
     await cartRepo.clearCart(userId);
 
-    // Get full order with items
-    const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userId);
-    if (!orderWithItems) {
-      throw new Error("Failed to retrieve created order");
-    }
+      // Get full order with items
+      const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userId);
+      if (!orderWithItems) {
+        throw new Error("Failed to retrieve created order");
+      }
 
-    return {
-      order: orderWithItems,
-      paymentReference
-    };
+      return {
+        order: orderWithItems,
+        paymentReference: paymentInit.data.reference,
+        authorizationUrl: paymentInit.data.authorization_url
+      };
+    } catch (error) {
+      // If payment initialization fails, we should still return the order
+      // but mark it appropriately - for now, just rethrow
+      throw error;
+    }
   },
 
   async getOrder(id: string, userId: string, userRole: string): Promise<OrderWithItems> {
@@ -289,5 +332,91 @@ export const ordersService = {
     }
 
     return orderWithItems;
+  },
+
+  async verifyPayment(reference: string, userId: string, userRole: string): Promise<OrderWithItems> {
+    // Verify payment with Paystack
+    const paymentData = await verifyPayment(reference);
+
+    // Find order by payment reference
+    const order = await ordersRepo.findOrderByPaymentReference(reference);
+    if (!order) {
+      throw notFound("Order not found for this payment reference.");
+    }
+
+    // Verify ownership (customers can only verify their own orders)
+    if (userRole === "customer" && order.userId !== userId) {
+      throw forbidden("You don't have permission to verify this payment.");
+    }
+
+    // Update payment status based on Paystack response
+    let paymentStatus: "pending" | "paid" | "failed" | "refunded" = "pending";
+    if (paymentData.data.status === "success") {
+      paymentStatus = "paid";
+    } else if (paymentData.data.status === "failed") {
+      paymentStatus = "failed";
+    }
+
+    // Update order payment status
+    await ordersRepo.updatePaymentStatus(order.id, paymentStatus, paymentData.data.id.toString());
+
+    // If payment is successful and order is still pending, update to processing
+    if (paymentStatus === "paid" && order.status === "pending") {
+      await ordersRepo.updateOrderStatus(order.id, "processing");
+    }
+
+    const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userRole === "customer" ? userId : undefined);
+    if (!orderWithItems) {
+      throw new Error("Failed to retrieve order after payment verification");
+    }
+
+    return orderWithItems;
+  },
+
+  async handleWebhook(payload: string, signature: string): Promise<void> {
+    // Verify webhook signature
+    const { verifyPaystackWebhook } = await import("../../lib/payments/paystack");
+    const isValid = verifyPaystackWebhook(payload, signature);
+    if (!isValid) {
+      throw unauthorized("Invalid webhook signature.");
+    }
+
+    const event = JSON.parse(payload) as {
+      event: string;
+      data: {
+        reference: string;
+        status: string;
+        id: number;
+        amount: number;
+        customer: { email: string };
+      };
+    };
+
+    // Handle charge.success event
+    if (event.event === "charge.success") {
+      const order = await ordersRepo.findOrderByPaymentReference(event.data.reference);
+      if (!order) {
+        // Order not found - log but don't throw (webhook should return 200)
+        return;
+      }
+
+      // Update payment status to paid
+      await ordersRepo.updatePaymentStatus(order.id, "paid", event.data.id.toString());
+
+      // If order is still pending, update to processing
+      if (order.status === "pending") {
+        await ordersRepo.updateOrderStatus(order.id, "processing");
+      }
+    }
+
+    // Handle charge.failed event
+    if (event.event === "charge.failed") {
+      const order = await ordersRepo.findOrderByPaymentReference(event.data.reference);
+      if (!order) {
+        return;
+      }
+
+      await ordersRepo.updatePaymentStatus(order.id, "failed");
+    }
   }
 };

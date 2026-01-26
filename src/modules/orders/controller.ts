@@ -33,7 +33,8 @@ export const ordersController = {
     res.status(201).json({
       message: "Order created successfully. Please proceed to payment.",
       order: result.order,
-      paymentReference: result.paymentReference
+      paymentReference: result.paymentReference,
+      authorizationUrl: result.authorizationUrl
     });
   },
 
@@ -123,5 +124,47 @@ export const ordersController = {
       message: "Order cancelled successfully.",
       order
     });
+  },
+
+  async verifyPayment(req: Request, res: Response) {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    if (!userId || !userRole) {
+      return res.status(401).json({ error: "Please sign in to verify payment." });
+    }
+
+    const reference = typeof req.query.reference === "string" ? req.query.reference : "";
+    if (!reference) {
+      return res.status(400).json({ error: "Payment reference is required." });
+    }
+
+    const order = await ordersService.verifyPayment(reference, userId, userRole);
+    res.json({
+      message: "Payment verified successfully.",
+      order
+    });
+  },
+
+  async handleWebhook(req: Request, res: Response) {
+    // Get signature from header
+    const signature = req.headers["x-paystack-signature"];
+    if (!signature || typeof signature !== "string") {
+      return res.status(401).json({ error: "Missing webhook signature." });
+    }
+
+    // Get raw body - Express parses JSON, so we need to stringify it back for signature verification
+    // In production, you might want to use express.raw() middleware for this route specifically
+    const payload = JSON.stringify(req.body);
+
+    try {
+      await ordersService.handleWebhook(payload, signature);
+      // Always return 200 to acknowledge receipt (even if processing fails)
+      res.status(200).json({ received: true });
+    } catch (error) {
+      // Log error but still return 200 to prevent Paystack retries
+      // In production, you'd want to log this properly
+      console.error("Webhook processing error:", error);
+      res.status(200).json({ received: true, error: "Processing failed but acknowledged" });
+    }
   }
 };
