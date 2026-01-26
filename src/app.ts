@@ -13,6 +13,7 @@ import { authRoutes } from "./modules/auth/routes";
 import { productsRoutes } from "./modules/products/routes";
 import { cartRoutes } from "./modules/cart/routes";
 import { shippingRoutes } from "./modules/shipping/routes";
+import { ordersRoutes } from "./modules/orders/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -55,6 +56,7 @@ export function createApp(): Express {
   app.use("/api/v1/products", productsRoutes);
   app.use("/api/v1/cart", cartRoutes);
   app.use("/api/v1/shipping", shippingRoutes);
+  app.use("/api/v1/orders", ordersRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({

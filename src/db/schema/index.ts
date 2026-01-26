@@ -9,4 +9,6 @@ export * from "./products";
 export * from "./product-variants";
 export * from "./cart-items";
 export * from "./shipping-addresses";
+export * from "./orders";
+export * from "./order-items";
 

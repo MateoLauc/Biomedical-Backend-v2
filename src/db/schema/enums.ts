@@ -9,3 +9,18 @@ export const verificationStatusEnum = pgEnum("verification_status", [
   "rejected"
 ]);
 
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled"
+]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "paid",
+  "failed",
+  "refunded"
+]);
+
