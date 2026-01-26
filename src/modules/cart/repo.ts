@@ -25,14 +25,36 @@ export const cartRepo = {
   async getCartItemsWithDetails(userId: string): Promise<CartItemWithDetails[]> {
     const items = await db
       .select({
+        // Cart item fields
         id: cartItems.id,
         userId: cartItems.userId,
         productVariantId: cartItems.productVariantId,
         quantity: cartItems.quantity,
         createdAt: cartItems.createdAt,
         updatedAt: cartItems.updatedAt,
-        productVariant: productVariants,
-        product: products
+        // Product variant fields
+        variantId: productVariants.id,
+        variantProductId: productVariants.productId,
+        variantPackSize: productVariants.packSize,
+        variantPrice: productVariants.price,
+        variantStockQuantity: productVariants.stockQuantity,
+        variantIsActive: productVariants.isActive,
+        variantCreatedAt: productVariants.createdAt,
+        variantUpdatedAt: productVariants.updatedAt,
+        // Product fields
+        productId: products.id,
+        productCategoryId: products.categoryId,
+        productName: products.name,
+        productSlug: products.slug,
+        productDescription: products.description,
+        productComposition: products.composition,
+        productIndication: products.indication,
+        productRequiresApproval: products.requiresApproval,
+        productIsActive: products.isActive,
+        productStockQuantity: products.stockQuantity,
+        productLowStockThreshold: products.lowStockThreshold,
+        productCreatedAt: products.createdAt,
+        productUpdatedAt: products.updatedAt
       })
       .from(cartItems)
       .innerJoin(productVariants, eq(cartItems.productVariantId, productVariants.id))
@@ -48,8 +70,29 @@ export const cartRepo = {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       productVariant: {
-        ...item.productVariant,
-        product: item.product
+        id: item.variantId,
+        productId: item.variantProductId,
+        packSize: item.variantPackSize,
+        price: item.variantPrice,
+        stockQuantity: item.variantStockQuantity,
+        isActive: item.variantIsActive,
+        createdAt: item.variantCreatedAt,
+        updatedAt: item.variantUpdatedAt,
+        product: {
+          id: item.productId,
+          categoryId: item.productCategoryId,
+          name: item.productName,
+          slug: item.productSlug,
+          description: item.productDescription,
+          composition: item.productComposition,
+          indication: item.productIndication,
+          requiresApproval: item.productRequiresApproval,
+          isActive: item.productIsActive,
+          stockQuantity: item.productStockQuantity,
+          lowStockThreshold: item.productLowStockThreshold,
+          createdAt: item.productCreatedAt,
+          updatedAt: item.productUpdatedAt
+        }
       }
     })) as CartItemWithDetails[];
   },
