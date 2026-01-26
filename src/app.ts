@@ -11,6 +11,8 @@ import { requestIdMiddleware } from "./middleware/request-id";
 import { errorHandler } from "./middleware/error-handler";
 import { authRoutes } from "./modules/auth/routes";
 import { productsRoutes } from "./modules/products/routes";
+import { cartRoutes } from "./modules/cart/routes";
+import { shippingRoutes } from "./modules/shipping/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -51,6 +53,8 @@ export function createApp(): Express {
 
   app.use("/api/v1/auth", authRoutes);
   app.use("/api/v1/products", productsRoutes);
+  app.use("/api/v1/cart", cartRoutes);
+  app.use("/api/v1/shipping", shippingRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({
