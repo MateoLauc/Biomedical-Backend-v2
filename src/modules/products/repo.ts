@@ -29,11 +29,6 @@ export const productsRepo = {
     return subCategories as Category[];
   },
 
-  async findSubCategoriesByParentId(parentId: string): Promise<Category[]> {
-    const subCategories = await db.select().from(categories).where(eq(categories.parentCategoryId, parentId)).orderBy(categories.name);
-    return subCategories as Category[];
-  },
-
   async updateCategory(id: string, data: Partial<CategoryInput>): Promise<Category> {
     const [category] = await db
       .update(categories)
