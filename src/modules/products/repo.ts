@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, asc } from "drizzle-orm";
+import { eq, and, desc, sql, asc, gt, lte } from "drizzle-orm";
 import { db } from "../../db";
 import { categories, products, productVariants } from "../../db/schema";
 import type { Category, Product, ProductVariant, CategoryInput, ProductInput, ProductVariantInput } from "./types";
@@ -118,6 +118,23 @@ export const productsRepo = {
 
     const [result] = await query;
     return Number(result?.count || 0);
+  },
+
+  async getInventoryCounts(): Promise<{ total: number; available: number; outOfStock: number; lowStock: number }> {
+    const [totalResult] = await db.select({ count: sql<number>`count(*)` }).from(products);
+    const [outOfStockResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(eq(products.stockQuantity, 0));
+    const [lowStockResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(and(gt(products.stockQuantity, 0), lte(products.stockQuantity, products.lowStockThreshold)));
+    const total = Number(totalResult?.count ?? 0);
+    const outOfStock = Number(outOfStockResult?.count ?? 0);
+    const lowStock = Number(lowStockResult?.count ?? 0);
+    const available = total - outOfStock;
+    return { total, available, outOfStock, lowStock };
   },
 
   async updateProduct(id: string, data: Partial<ProductInput>): Promise<Product> {

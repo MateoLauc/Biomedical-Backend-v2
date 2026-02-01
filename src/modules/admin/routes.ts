@@ -1,0 +1,15 @@
+import { Router } from "express";
+import { adminController } from "./controller";
+import { requireAuth } from "../../middleware/auth";
+import { requireRole } from "../../middleware/auth";
+import { validateQuery } from "../../middleware/validation";
+import { listUsersQuerySchema } from "./schema";
+
+export const adminRoutes = Router();
+
+adminRoutes.use(requireAuth);
+adminRoutes.use(requireRole("super_admin", "admin"));
+
+adminRoutes.get("/users", validateQuery(listUsersQuerySchema), (req, res) => adminController.listUsers(req, res));
+adminRoutes.get("/dashboard", (req, res) => adminController.getDashboard(req, res));
+adminRoutes.get("/inventory", (req, res) => adminController.getInventoryOverview(req, res));

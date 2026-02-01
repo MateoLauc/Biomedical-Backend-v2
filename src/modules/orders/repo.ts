@@ -101,6 +101,14 @@ export const ordersRepo = {
     return Number(result?.count || 0);
   },
 
+  async getRevenueTotal(): Promise<number> {
+    const [result] = await db
+      .select({ total: sql<number>`coalesce(sum(${orders.total}), 0)` })
+      .from(orders)
+      .where(eq(orders.paymentStatus, "paid"));
+    return Number(result?.total ?? 0);
+  },
+
   async getOrderWithItems(id: string, userId?: string): Promise<OrderWithItems | null> {
     const order = await this.findOrderById(id, userId);
     if (!order) {
