@@ -9,6 +9,7 @@ import { corsOrigins, env, isProd } from "./config/env";
 import { logger } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { errorHandler } from "./middleware/error-handler";
+import { Sentry, isSentryEnabled } from "./lib/sentry";
 import { authRoutes } from "./modules/auth/routes";
 import { productsRoutes } from "./modules/products/routes";
 import { cartRoutes } from "./modules/cart/routes";
@@ -78,6 +79,9 @@ export function createApp(): Express {
     logger.info({ corsOrigins }, "CORS origins loaded");
   }
 
+  if (isSentryEnabled) {
+    Sentry.setupExpressErrorHandler(app);
+  }
   app.use(errorHandler);
 
   return app;
