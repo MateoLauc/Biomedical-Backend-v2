@@ -8,6 +8,7 @@ import type { RequestHandler } from "express";
 import { corsOrigins, env, isProd } from "./config/env";
 import { logger } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
+import { apiRateLimiter } from "./middleware/rate-limit";
 import { errorHandler } from "./middleware/error-handler";
 import { Sentry, isSentryEnabled } from "./lib/sentry";
 import { authRoutes } from "./modules/auth/routes";
@@ -58,6 +59,7 @@ export function createApp(): Express {
     });
   });
 
+  app.use("/api/v1", apiRateLimiter);
   app.use("/api/v1/auth", authRoutes);
   app.use("/api/v1/products", productsRoutes);
   app.use("/api/v1/cart", cartRoutes);

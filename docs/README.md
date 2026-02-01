@@ -15,6 +15,7 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - [`09-admin.md`](09-admin.md) — Admin: list users, dashboard stats, inventory overview
 - [`10-blog.md`](10-blog.md) — Blog: CRUD for posts (title, slug, body, imageUrl), Cloudinary image upload
 - [`11-sentry.md`](11-sentry.md) — Sentry: error monitoring and optional tracing
+- [`12-rate-limiting.md`](12-rate-limiting.md) — Rate limiting for /api/v1
 
 ## Current status
 
@@ -28,4 +29,5 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - ✅ Admin module complete (list users, dashboard, inventory overview)
 - ✅ Blog module complete (CRUD, slug, imageUrl, Cloudinary upload)
 - ✅ Sentry integration (error monitoring, optional tracing)
-- ⏭️ Next planned: **rate limiting**, **tests**, **Vercel deployment**
+- ✅ Rate limiting (100 req/15 min per IP on /api/v1, configurable via env)
+- ⏭️ Next planned: **tests**, **Vercel deployment**

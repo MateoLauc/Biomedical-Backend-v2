@@ -29,7 +29,10 @@ const envSchema = z.object({
   SENTRY_DSN: z.string().optional(),
 
   PAYSTACK_SECRET_KEY: z.string().optional(),
-  PAYSTACK_WEBHOOK_SECRET: z.string().optional()
+  PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().optional(),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().optional()
 });
 
 export type Env = z.infer<typeof envSchema>;
