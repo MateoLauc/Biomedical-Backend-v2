@@ -36,6 +36,13 @@
       "when": 1769415778465,
       "tag": "0003_silent_blonde_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769918973689,
+      "tag": "0004_create_notifications_table",
+      "breakpoints": true
     }
   ]
 }

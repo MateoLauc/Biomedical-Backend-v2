@@ -16,6 +16,7 @@ import { shippingRoutes } from "./modules/shipping/routes";
 import { ordersRoutes } from "./modules/orders/routes";
 import { adminRoutes } from "./modules/admin/routes";
 import { userRoutes } from "./modules/user/routes";
+import { notificationsRoutes } from "./modules/notifications/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -61,6 +62,7 @@ export function createApp(): Express {
   app.use("/api/v1/orders", ordersRoutes);
   app.use("/api/v1/admin", adminRoutes);
   app.use("/api/v1/users", userRoutes);
+  app.use("/api/v1/notifications", notificationsRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({
