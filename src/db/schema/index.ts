@@ -13,4 +13,5 @@ export * from "./orders";
 export * from "./order-items";
 export * from "./notifications";
 export * from "./jobs";
+export * from "./blog-posts";
 

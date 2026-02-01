@@ -13,6 +13,7 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - [`07-shipping-addresses.md`](07-shipping-addresses.md) — Shipping address CRUD, default address management
 - [`08-orders.md`](08-orders.md) — Orders (create from cart, status, cancel), Paystack (initialize, webhook, verify payment)
 - [`09-admin.md`](09-admin.md) — Admin: list users, dashboard stats, inventory overview
+- [`10-blog.md`](10-blog.md) — Blog: CRUD for posts (title, slug, body, imageUrl), Cloudinary image upload
 
 ## Current status
 
@@ -24,4 +25,5 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - ✅ Shipping Addresses module complete (CRUD operations, default address management)
 - ✅ Orders + Paystack module complete (create from cart, list/get/verify/cancel, status updates, webhook)
 - ✅ Admin module complete (list users, dashboard, inventory overview)
-- ⏭️ Next planned: **User profile** (verification status, notifications), **Careers**, **Blog**
+- ✅ Blog module complete (CRUD, slug, imageUrl, Cloudinary upload)
+- ⏭️ Next planned: **Sentry**, **rate limiting**, **tests**, **Vercel deployment**

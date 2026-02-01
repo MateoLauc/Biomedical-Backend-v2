@@ -26,3 +26,7 @@ export const paymentStatusEnum = pgEnum("payment_status", [
 
 export const jobStatusEnum = pgEnum("job_status", ["open", "closed"]);
 
+export const blogPostStatusEnum = pgEnum("blog_post_status", ["draft", "published"]);
+
+export const blogPostTypeEnum = pgEnum("blog_post_type", ["press_releases", "videos", "news_article"]);
+

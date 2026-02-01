@@ -18,6 +18,7 @@ import { adminRoutes } from "./modules/admin/routes";
 import { userRoutes } from "./modules/user/routes";
 import { notificationsRoutes } from "./modules/notifications/routes";
 import { careersRoutes } from "./modules/careers/routes";
+import { blogRoutes } from "./modules/blog/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -65,6 +66,7 @@ export function createApp(): Express {
   app.use("/api/v1/users", userRoutes);
   app.use("/api/v1/notifications", notificationsRoutes);
   app.use("/api/v1/careers", careersRoutes);
+  app.use("/api/v1/blog", blogRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({

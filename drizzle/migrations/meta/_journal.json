@@ -50,6 +50,20 @@
       "when": 1769919310277,
       "tag": "0005_create_jobs_table",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769920000000,
+      "tag": "0006_create_blog_posts_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1769920100000,
+      "tag": "0007_add_blog_post_type",
+      "breakpoints": true
     }
   ]
 }
