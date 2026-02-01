@@ -43,6 +43,13 @@
       "when": 1769918973689,
       "tag": "0004_create_notifications_table",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1769919310277,
+      "tag": "0005_create_jobs_table",
+      "breakpoints": true
     }
   ]
 }

@@ -24,3 +24,5 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "refunded"
 ]);
 
+export const jobStatusEnum = pgEnum("job_status", ["open", "closed"]);
+

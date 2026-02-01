@@ -12,4 +12,5 @@ export * from "./shipping-addresses";
 export * from "./orders";
 export * from "./order-items";
 export * from "./notifications";
+export * from "./jobs";
 
