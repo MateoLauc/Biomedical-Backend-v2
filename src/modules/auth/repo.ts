@@ -104,6 +104,22 @@ export const authRepo = {
     return user as User;
   },
 
+  async updateUserVerification(
+    userId: string,
+    data: Partial<{
+      businessLicenseStatus: "not_submitted" | "pending" | "approved" | "rejected";
+      prescriptionAuthorityStatus: "not_submitted" | "pending" | "approved" | "rejected";
+    }>
+  ): Promise<User> {
+    const set: { updatedAt: Date; businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected"; prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected" } = {
+      updatedAt: new Date()
+    };
+    if (data.businessLicenseStatus !== undefined) set.businessLicenseStatus = data.businessLicenseStatus;
+    if (data.prescriptionAuthorityStatus !== undefined) set.prescriptionAuthorityStatus = data.prescriptionAuthorityStatus;
+    const [user] = await db.update(users).set(set).where(eq(users.id, userId)).returning();
+    return user as User;
+  },
+
   async createRefreshToken(data: {
     userId: string;
     tokenHash: string;

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { adminService } from "./service";
-import type { ListUsersQuery } from "./types";
+import type { ListUsersQuery, UpdateUserVerificationInput } from "./types";
 
 export const adminController = {
   async listUsers(req: Request, res: Response) {
@@ -56,5 +56,20 @@ export const adminController = {
 
     const overview = await adminService.getInventoryOverview(userRole);
     res.json(overview);
+  },
+
+  async updateUserVerification(req: Request, res: Response) {
+    const userRole = req.user?.role;
+    if (!userRole) {
+      return res.status(401).json({ error: "Please sign in to access this resource." });
+    }
+
+    const id = typeof req.params.id === "string" ? req.params.id : "";
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required." });
+    }
+
+    const user = await adminService.updateUserVerification(userRole, id, req.body as UpdateUserVerificationInput);
+    res.json({ message: "User verification status updated successfully.", user });
   }
 };

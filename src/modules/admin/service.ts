@@ -1,8 +1,8 @@
 import { authRepo } from "../auth/repo";
 import { productsRepo } from "../products/repo";
 import { ordersRepo } from "../orders/repo";
-import { forbidden } from "../../lib/http-errors";
-import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery } from "./types";
+import { forbidden, notFound } from "../../lib/http-errors";
+import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery, UpdateUserVerificationInput } from "./types";
 
 export const adminService = {
   async listUsers(query: ListUsersQuery, userRole: string): Promise<{
@@ -100,5 +100,47 @@ export const adminService = {
     }
 
     return productsRepo.getInventoryCounts();
+  },
+
+  async updateUserVerification(
+    userRole: string,
+    targetUserId: string,
+    input: UpdateUserVerificationInput
+  ): Promise<AdminUserListItem> {
+    if (userRole !== "super_admin" && userRole !== "admin") {
+      throw forbidden("Only administrators can update user verification status.");
+    }
+
+    const existing = await authRepo.findUserById(targetUserId);
+    if (!existing) {
+      throw notFound("User not found.");
+    }
+
+    const data: Parameters<typeof authRepo.updateUserVerification>[1] = {};
+    if (input.businessLicenseStatus !== undefined) data.businessLicenseStatus = input.businessLicenseStatus;
+    if (input.prescriptionAuthorityStatus !== undefined) data.prescriptionAuthorityStatus = input.prescriptionAuthorityStatus;
+
+    await authRepo.updateUserVerification(targetUserId, data);
+    const updated = await authRepo.findUserById(targetUserId);
+    if (!updated) {
+      throw notFound("User not found.");
+    }
+
+    return {
+      id: updated.id,
+      role: updated.role,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      email: updated.email,
+      emailVerifiedAt: updated.emailVerifiedAt,
+      identityVerified: updated.identityVerified,
+      businessLicenseStatus: updated.businessLicenseStatus,
+      prescriptionAuthorityStatus: updated.prescriptionAuthorityStatus,
+      whoYouAre: updated.whoYouAre,
+      countryOfPractice: updated.countryOfPractice,
+      phoneNumber: updated.phoneNumber,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt
+    };
   }
 };

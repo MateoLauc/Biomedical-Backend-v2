@@ -33,3 +33,8 @@ export type ListUsersQuery = {
   page?: number;
   limit?: number;
 };
+
+export type UpdateUserVerificationInput = {
+  businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+  prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+};
