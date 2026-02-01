@@ -75,6 +75,35 @@ export const authRepo = {
       .where(eq(users.id, userId));
   },
 
+  async updateProfile(
+    userId: string,
+    data: Partial<{
+      firstName: string;
+      lastName: string;
+      whoYouAre: string;
+      phoneNumber: string;
+      countryOfPractice: string;
+      email: string;
+      emailLower: string;
+      emailVerifiedAt: Date | null;
+    }>
+  ): Promise<User> {
+    const set: { updatedAt: Date; firstName?: string; lastName?: string; whoYouAre?: string; phoneNumber?: string; countryOfPractice?: string; email?: string; emailLower?: string; emailVerifiedAt?: Date | null } = {
+      updatedAt: new Date()
+    };
+    if (data.firstName !== undefined) set.firstName = data.firstName;
+    if (data.lastName !== undefined) set.lastName = data.lastName;
+    if (data.whoYouAre !== undefined) set.whoYouAre = data.whoYouAre;
+    if (data.phoneNumber !== undefined) set.phoneNumber = data.phoneNumber;
+    if (data.countryOfPractice !== undefined) set.countryOfPractice = data.countryOfPractice;
+    if (data.email !== undefined) set.email = data.email;
+    if (data.emailLower !== undefined) set.emailLower = data.emailLower;
+    if (data.emailVerifiedAt !== undefined) set.emailVerifiedAt = data.emailVerifiedAt;
+
+    const [user] = await db.update(users).set(set).where(eq(users.id, userId)).returning();
+    return user as User;
+  },
+
   async createRefreshToken(data: {
     userId: string;
     tokenHash: string;
