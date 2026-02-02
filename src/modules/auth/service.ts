@@ -3,7 +3,13 @@ import { authRepo } from "./repo";
 import { hashPassword, verifyPassword } from "../../lib/auth/password";
 import { generateToken, hashToken } from "../../lib/auth/tokens";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../lib/auth/jwt";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../../lib/email";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+  sendNewDeviceEmail
+} from "../../lib/email";
+import { deviceHash, deviceDescription } from "../../lib/device";
 import { badRequest, unauthorized, notFound } from "../../lib/http-errors";
 import type { SignupInput, SigninInput, AuthTokens, PublicUser } from "./types";
 
@@ -60,6 +66,7 @@ export const authService = {
     });
 
     await sendVerificationEmail(user.email, token);
+    await sendWelcomeEmail(user.email, user.firstName);
 
     return { user: toPublicUser(user), verificationToken: token };
   },
@@ -75,6 +82,28 @@ export const authService = {
     const isValid = await verifyPassword(input.password, user.passwordHash);
     if (!isValid) {
       throw unauthorized("The email or password you entered is incorrect. Please try again.");
+    }
+
+    const hash = deviceHash(ip, userAgent);
+    const existingDevice = await authRepo.findDeviceByUserAndHash(user.id, hash);
+    if (!existingDevice) {
+      await authRepo.createDevice({
+        userId: user.id,
+        deviceHash: hash,
+        ...(userAgent && { userAgent })
+      });
+      const timestamp = new Date().toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC"
+      });
+      await sendNewDeviceEmail({
+        email: user.email,
+        deviceDescription: deviceDescription(userAgent),
+        timestamp
+      });
+    } else {
+      await authRepo.updateDeviceLastSeen(existingDevice.id);
     }
 
     const accessToken = await generateAccessToken({

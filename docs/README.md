@@ -16,6 +16,7 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - [`10-blog.md`](10-blog.md) — Blog: CRUD for posts (title, slug, body, imageUrl), Cloudinary image upload
 - [`11-sentry.md`](11-sentry.md) — Sentry: error monitoring and optional tracing
 - [`12-rate-limiting.md`](12-rate-limiting.md) — Rate limiting for /api/v1
+- [`13-mailtrap.md`](13-mailtrap.md) — Mailtrap transactional email (verification, password reset, welcome, new-device)
 
 ## Current status
 
@@ -30,4 +31,5 @@ This folder explains **everything implemented so far** in this backend repo, so 
 - ✅ Blog module complete (CRUD, slug, imageUrl, Cloudinary upload)
 - ✅ Sentry integration (error monitoring, optional tracing)
 - ✅ Rate limiting (100 req/15 min per IP on /api/v1, configurable via env)
+- ✅ Mailtrap transactional email (verification, password reset, welcome, new-device sign-in)
 - ⏭️ Next planned: **tests**, **Vercel deployment**

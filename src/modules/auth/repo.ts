@@ -1,6 +1,12 @@
 import { eq, and, or, isNull, desc, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { users, refreshTokens, emailVerificationTokens, passwordResetTokens } from "../../db/schema";
+import {
+  users,
+  refreshTokens,
+  emailVerificationTokens,
+  passwordResetTokens,
+  userDevices
+} from "../../db/schema";
 import type { User, RefreshToken, EmailVerificationToken, PasswordResetToken } from "./types.js";
 
 export type AdminUserListItem = {
@@ -220,6 +226,31 @@ export const authRepo = {
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetTokens.id, tokenId));
+  },
+
+  async findDeviceByUserAndHash(userId: string, deviceHash: string) {
+    const [row] = await db
+      .select()
+      .from(userDevices)
+      .where(and(eq(userDevices.userId, userId), eq(userDevices.deviceHash, deviceHash)))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async createDevice(data: {
+    userId: string;
+    deviceHash: string;
+    userAgent?: string;
+  }) {
+    const [device] = await db.insert(userDevices).values(data).returning();
+    return device!;
+  },
+
+  async updateDeviceLastSeen(deviceId: string): Promise<void> {
+    await db
+      .update(userDevices)
+      .set({ lastSeenAt: new Date() })
+      .where(eq(userDevices.id, deviceId));
   },
 
   async listUsers(options?: {

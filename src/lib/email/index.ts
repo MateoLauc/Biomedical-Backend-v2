@@ -1,42 +1,57 @@
-import nodemailer from "nodemailer";
 import { env } from "../../config/env";
+import { getMailtrapClient, getFromAddress, isEmailConfigured } from "./client";
 import { logger } from "../logger";
+import {
+  verificationSubject,
+  verificationHtml,
+  verificationText
+} from "./templates/verification";
+import {
+  passwordResetSubject,
+  passwordResetHtml,
+  passwordResetText
+} from "./templates/password-reset";
+import {
+  welcomeSubject,
+  welcomeHtml,
+  welcomeText
+} from "./templates/welcome";
+import {
+  newDeviceSubject,
+  newDeviceHtml,
+  newDeviceText
+} from "./templates/new-device";
+import { getLogoAttachment } from "./logo";
 
-let transporter: nodemailer.Transporter | null = null;
+function baseUrl(): string {
+  const first = env.CORS_ORIGINS.split(",")[0]?.trim();
+  return first || "http://localhost:3000";
+}
 
-if (env.MAILTRAP_HOST && env.MAILTRAP_USER && env.MAILTRAP_PASS) {
-  transporter = nodemailer.createTransport({
-    host: env.MAILTRAP_HOST,
-    port: env.MAILTRAP_PORT || 587,
-    auth: {
-      user: env.MAILTRAP_USER,
-      pass: env.MAILTRAP_PASS
-    }
-  });
-} else {
-  logger.warn("Email service not configured (MAILTRAP_* env vars missing)");
+function emailAttachments(): Array<{ filename: string; content_id: string; disposition: "inline"; content: Buffer }> {
+  const logo = getLogoAttachment();
+  return logo ? [logo] : [];
 }
 
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
-  const verificationUrl = `${env.CORS_ORIGINS.split(",")[0] || "http://localhost:3000"}/verify-email?token=${token}`;
+  const verificationUrl = `${baseUrl()}/verify-email?token=${token}`;
 
-  if (!transporter) {
-    logger.info({ email, token, verificationUrl }, "Email verification (not sent - email not configured)");
+  if (!isEmailConfigured()) {
+    logger.info({ email, verificationUrl }, "Email verification (not sent - email not configured)");
     return;
   }
 
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
   try {
-    await transporter.sendMail({
-      from: env.MAIL_FROM || "Biomedical <no-reply@biomedical.example>",
-      to: email,
-      subject: "Verify your email address",
-      html: `
-        <h1>Verify your email address</h1>
-        <p>Click the link below to verify your email:</p>
-        <p><a href="${verificationUrl}">${verificationUrl}</a></p>
-        <p>This link expires in 24 hours.</p>
-      `,
-      text: `Verify your email by visiting: ${verificationUrl}`
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: verificationSubject(),
+      html: verificationHtml({ verificationUrl }),
+      text: verificationText({ verificationUrl }),
+      attachments: emailAttachments()
     });
     logger.info({ email }, "Verification email sent");
   } catch (err) {
@@ -46,30 +61,90 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 }
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
-  const resetUrl = `${env.CORS_ORIGINS.split(",")[0] || "http://localhost:3000"}/reset-password?token=${token}`;
+  const resetUrl = `${baseUrl()}/reset-password?token=${token}`;
 
-  if (!transporter) {
-    logger.info({ email, token, resetUrl }, "Password reset email (not sent - email not configured)");
+  if (!isEmailConfigured()) {
+    logger.info({ email, resetUrl }, "Password reset email (not sent - email not configured)");
     return;
   }
 
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
   try {
-    await transporter.sendMail({
-      from: env.MAIL_FROM || "Biomedical <no-reply@biomedical.example>",
-      to: email,
-      subject: "Reset your password",
-      html: `
-        <h1>Reset your password</h1>
-        <p>Click the link below to reset your password:</p>
-        <p><a href="${resetUrl}">${resetUrl}</a></p>
-        <p>This link expires in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
-      `,
-      text: `Reset your password by visiting: ${resetUrl}`
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: passwordResetSubject(),
+      html: passwordResetHtml({ resetUrl }),
+      text: passwordResetText({ resetUrl }),
+      attachments: emailAttachments()
     });
     logger.info({ email }, "Password reset email sent");
   } catch (err) {
     logger.error({ err, email }, "Failed to send password reset email");
+    throw err;
+  }
+}
+
+export async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+  const appUrl = baseUrl();
+
+  if (!isEmailConfigured()) {
+    logger.info({ email, appUrl }, "Welcome email (not sent - email not configured)");
+    return;
+  }
+
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: welcomeSubject(),
+      html: welcomeHtml({ firstName, appUrl }),
+      text: welcomeText({ firstName, appUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Welcome email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send welcome email");
+    throw err;
+  }
+}
+
+export type NewDeviceEmailParams = {
+  email: string;
+  deviceDescription: string;
+  timestamp: string;
+};
+
+export async function sendNewDeviceEmail(params: NewDeviceEmailParams): Promise<void> {
+  const { email, deviceDescription, timestamp } = params;
+  const appUrl = baseUrl();
+  const resetPasswordUrl = `${appUrl}/forgot-password`;
+
+  if (!isEmailConfigured()) {
+    logger.info({ email, deviceDescription }, "New device email (not sent - email not configured)");
+    return;
+  }
+
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: newDeviceSubject(),
+      html: newDeviceHtml({ deviceDescription, timestamp, appUrl, resetPasswordUrl }),
+      text: newDeviceText({ deviceDescription, timestamp, appUrl, resetPasswordUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "New device email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send new device email");
     throw err;
   }
 }
