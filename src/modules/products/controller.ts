@@ -20,6 +20,11 @@ export const productsController = {
     res.json({ categories });
   },
 
+  async listCategoriesTree(_req: Request, res: Response) {
+    const result = await productsService.listCategoriesTree();
+    res.json(result);
+  },
+
   async updateCategory(req: Request, res: Response) {
     const id = typeof req.params.id === "string" ? req.params.id : "";
     const category = await productsService.updateCategory(id, req.body as Partial<CategoryInput>);

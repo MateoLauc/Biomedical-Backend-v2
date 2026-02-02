@@ -1,6 +1,7 @@
 import type { categories, products, productVariants } from "../../db/schema";
 
 export type Category = typeof categories.$inferSelect;
+export type CategoryWithSubCategories = Category & { subCategories: Category[] };
 export type Product = typeof products.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;
 

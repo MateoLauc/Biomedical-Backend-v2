@@ -8,9 +8,19 @@ import type { RequestHandler } from "express";
 import { corsOrigins, env, isProd } from "./config/env";
 import { logger } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
+import { apiRateLimiter } from "./middleware/rate-limit";
 import { errorHandler } from "./middleware/error-handler";
+import { Sentry, isSentryEnabled } from "./lib/sentry";
 import { authRoutes } from "./modules/auth/routes";
 import { productsRoutes } from "./modules/products/routes";
+import { cartRoutes } from "./modules/cart/routes";
+import { shippingRoutes } from "./modules/shipping/routes";
+import { ordersRoutes } from "./modules/orders/routes";
+import { adminRoutes } from "./modules/admin/routes";
+import { userRoutes } from "./modules/user/routes";
+import { notificationsRoutes } from "./modules/notifications/routes";
+import { careersRoutes } from "./modules/careers/routes";
+import { blogRoutes } from "./modules/blog/routes";
 
 export function createApp(): Express {
   const app = express();
@@ -49,8 +59,17 @@ export function createApp(): Express {
     });
   });
 
+  app.use("/api/v1", apiRateLimiter);
   app.use("/api/v1/auth", authRoutes);
   app.use("/api/v1/products", productsRoutes);
+  app.use("/api/v1/cart", cartRoutes);
+  app.use("/api/v1/shipping", shippingRoutes);
+  app.use("/api/v1/orders", ordersRoutes);
+  app.use("/api/v1/admin", adminRoutes);
+  app.use("/api/v1/users", userRoutes);
+  app.use("/api/v1/notifications", notificationsRoutes);
+  app.use("/api/v1/careers", careersRoutes);
+  app.use("/api/v1/blog", blogRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({
@@ -62,6 +81,9 @@ export function createApp(): Express {
     logger.info({ corsOrigins }, "CORS origins loaded");
   }
 
+  if (isSentryEnabled) {
+    Sentry.setupExpressErrorHandler(app);
+  }
   app.use(errorHandler);
 
   return app;

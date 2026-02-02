@@ -18,6 +18,7 @@ productsRoutes.post("/categories", requireAuth, requireRole("super_admin", "admi
   productsController.createCategory(req, res)
 );
 productsRoutes.get("/categories", (req, res) => productsController.listCategories(req, res));
+productsRoutes.get("/categories/tree", (req, res) => productsController.listCategoriesTree(req, res));
 productsRoutes.get("/categories/:id", (req, res) => productsController.getCategory(req, res));
 productsRoutes.patch("/categories/:id", requireAuth, requireRole("super_admin", "admin"), validateBody(updateCategorySchema), (req, res) =>
   productsController.updateCategory(req, res)

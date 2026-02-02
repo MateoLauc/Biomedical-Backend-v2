@@ -9,3 +9,24 @@ export const verificationStatusEnum = pgEnum("verification_status", [
   "rejected"
 ]);
 
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled"
+]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "paid",
+  "failed",
+  "refunded"
+]);
+
+export const jobStatusEnum = pgEnum("job_status", ["open", "closed"]);
+
+export const blogPostStatusEnum = pgEnum("blog_post_status", ["draft", "published"]);
+
+export const blogPostTypeEnum = pgEnum("blog_post_type", ["press_releases", "videos", "news_article"]);
+

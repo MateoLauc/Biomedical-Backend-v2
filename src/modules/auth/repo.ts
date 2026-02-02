@@ -1,7 +1,24 @@
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, or, isNull, desc, sql } from "drizzle-orm";
 import { db } from "../../db";
 import { users, refreshTokens, emailVerificationTokens, passwordResetTokens } from "../../db/schema";
 import type { User, RefreshToken, EmailVerificationToken, PasswordResetToken } from "./types.js";
+
+export type AdminUserListItem = {
+  id: string;
+  role: "super_admin" | "admin" | "customer";
+  firstName: string;
+  lastName: string;
+  email: string;
+  emailVerifiedAt: Date | null;
+  identityVerified: boolean;
+  businessLicenseStatus: "not_submitted" | "pending" | "approved" | "rejected";
+  prescriptionAuthorityStatus: "not_submitted" | "pending" | "approved" | "rejected";
+  whoYouAre: string;
+  countryOfPractice: string;
+  phoneNumber: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export const authRepo = {
   async createUser(data: {
@@ -56,6 +73,51 @@ export const authRepo = {
         updatedAt: new Date()
       })
       .where(eq(users.id, userId));
+  },
+
+  async updateProfile(
+    userId: string,
+    data: Partial<{
+      firstName: string;
+      lastName: string;
+      whoYouAre: string;
+      phoneNumber: string;
+      countryOfPractice: string;
+      email: string;
+      emailLower: string;
+      emailVerifiedAt: Date | null;
+    }>
+  ): Promise<User> {
+    const set: { updatedAt: Date; firstName?: string; lastName?: string; whoYouAre?: string; phoneNumber?: string; countryOfPractice?: string; email?: string; emailLower?: string; emailVerifiedAt?: Date | null } = {
+      updatedAt: new Date()
+    };
+    if (data.firstName !== undefined) set.firstName = data.firstName;
+    if (data.lastName !== undefined) set.lastName = data.lastName;
+    if (data.whoYouAre !== undefined) set.whoYouAre = data.whoYouAre;
+    if (data.phoneNumber !== undefined) set.phoneNumber = data.phoneNumber;
+    if (data.countryOfPractice !== undefined) set.countryOfPractice = data.countryOfPractice;
+    if (data.email !== undefined) set.email = data.email;
+    if (data.emailLower !== undefined) set.emailLower = data.emailLower;
+    if (data.emailVerifiedAt !== undefined) set.emailVerifiedAt = data.emailVerifiedAt;
+
+    const [user] = await db.update(users).set(set).where(eq(users.id, userId)).returning();
+    return user as User;
+  },
+
+  async updateUserVerification(
+    userId: string,
+    data: Partial<{
+      businessLicenseStatus: "not_submitted" | "pending" | "approved" | "rejected";
+      prescriptionAuthorityStatus: "not_submitted" | "pending" | "approved" | "rejected";
+    }>
+  ): Promise<User> {
+    const set: { updatedAt: Date; businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected"; prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected" } = {
+      updatedAt: new Date()
+    };
+    if (data.businessLicenseStatus !== undefined) set.businessLicenseStatus = data.businessLicenseStatus;
+    if (data.prescriptionAuthorityStatus !== undefined) set.prescriptionAuthorityStatus = data.prescriptionAuthorityStatus;
+    const [user] = await db.update(users).set(set).where(eq(users.id, userId)).returning();
+    return user as User;
   },
 
   async createRefreshToken(data: {
@@ -158,5 +220,80 @@ export const authRepo = {
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetTokens.id, tokenId));
+  },
+
+  async listUsers(options?: {
+    role?: "super_admin" | "admin" | "customer";
+    identityVerified?: boolean;
+    businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+    prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+    limit?: number;
+    offset?: number;
+  }): Promise<AdminUserListItem[]> {
+    const conditions = [];
+    if (options?.role) conditions.push(eq(users.role, options.role));
+    if (options?.identityVerified !== undefined) conditions.push(eq(users.identityVerified, options.identityVerified));
+    if (options?.businessLicenseStatus) conditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
+    if (options?.prescriptionAuthorityStatus) conditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+
+    let query = db
+      .select({
+        id: users.id,
+        role: users.role,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        emailVerifiedAt: users.emailVerifiedAt,
+        identityVerified: users.identityVerified,
+        businessLicenseStatus: users.businessLicenseStatus,
+        prescriptionAuthorityStatus: users.prescriptionAuthorityStatus,
+        whoYouAre: users.whoYouAre,
+        countryOfPractice: users.countryOfPractice,
+        phoneNumber: users.phoneNumber,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as typeof query;
+    }
+    if (options?.limit) {
+      query = query.limit(options.limit) as typeof query;
+    }
+    if (options?.offset) {
+      query = query.offset(options.offset) as typeof query;
+    }
+
+    return (await query) as AdminUserListItem[];
+  },
+
+  async countUsers(options?: {
+    role?: "super_admin" | "admin" | "customer";
+    identityVerified?: boolean;
+    businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+    prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+  }): Promise<number> {
+    const conditions = [];
+    if (options?.role) conditions.push(eq(users.role, options.role));
+    if (options?.identityVerified !== undefined) conditions.push(eq(users.identityVerified, options.identityVerified));
+    if (options?.businessLicenseStatus) conditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
+    if (options?.prescriptionAuthorityStatus) conditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+
+    let query = db.select({ count: sql<number>`count(*)` }).from(users);
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as typeof query;
+    }
+    const [result] = await query;
+    return Number(result?.count ?? 0);
+  },
+
+  async countPendingVerifications(): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(or(eq(users.businessLicenseStatus, "pending"), eq(users.prescriptionAuthorityStatus, "pending")));
+    return Number(result?.count ?? 0);
   }
 };

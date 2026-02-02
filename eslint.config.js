@@ -3,6 +3,7 @@ import tseslint from "typescript-eslint";
 
 const tsFiles = ["**/*.ts"];
 const repoFiles = ["**/repo.ts", "**/repositories/**/*.ts"];
+const serviceFiles = ["**/service.ts"];
 
 export default [
   {
@@ -10,11 +11,11 @@ export default [
   },
   js.configs.recommended,
   ...tseslint.configs.recommended.map((c) => ({ ...c, files: tsFiles })),
-  // Exclude repo files from type-checked rules to avoid false positives with Drizzle's complex generics
+  // Exclude repo and service files from type-checked rules to avoid false positives with Drizzle's complex generics
   ...tseslint.configs.recommendedTypeChecked.map((c) => ({
     ...c,
     files: tsFiles,
-    ignores: repoFiles
+    ignores: [...repoFiles, ...serviceFiles]
   })),
   {
     files: tsFiles,
@@ -39,9 +40,9 @@ export default [
     }
   },
   {
-    // Disable strict type-checking for repo files that use Drizzle ORM
+    // Disable strict type-checking for repo and service files that use Drizzle ORM
     // Drizzle's complex generic types cause false positives with TypeScript's compiler diagnostics
-    files: repoFiles,
+    files: [...repoFiles, ...serviceFiles],
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-argument": "off",

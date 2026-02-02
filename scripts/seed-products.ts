@@ -174,10 +174,13 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
     // Detect product names - must start with brand names
     // Product names ALWAYS start with: Bioflex, Biomedical, Biogyl, Bioferex, Bioper, Excoff, Ipec, CAPD
     // They should NOT be indication lines, descriptions, or other content
+    // IMPORTANT: Only detect as product if we're NOT currently in an indication section
     const isProductName =
+      currentSection !== "indication" && // Don't treat indication lines as products
       line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i) &&
       !line.match(/^(Description|Composition|Indication|Pack size|Pack Size|Benefits)/i) &&
-      line.length < 100;
+      line.length < 100 &&
+      !line.match(/^(Correction|Rehydration|Vehicle|Source|Maintenance|Mild|Severe|Treatment|Management|Support|Fluid|Energy|Hypoglycemia|Hyperkalemia|Nutritional|Removal|Clearance|Patients|Continuous|Ambulatory|Prophylaxis|Systemic|Cryptococcal|Urinary|Respiratory|Anaerobic|Amoebiasis|Hypovolemia|Shock|Blood loss|Suitable|Surgery|Trauma)/i); // Common indication words
 
     if (isProductName && currentCategory) {
       // Save previous product
@@ -226,10 +229,11 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
         } else if (!line.match(/^per\s+\d+/i)) {
           currentProduct.composition += " " + line;
         }
-      } else if (currentSection === "indication" && line && !line.match(/^(Pack size|Composition|Description)/i)) {
+      } else if (currentSection === "indication" && line && !line.match(/^(Pack size|Composition|Description|Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)/i)) {
+        // In indication section, collect lines UNLESS they start with a brand name (which would be a new product)
         if (!currentProduct.indication) {
           currentProduct.indication = line;
-        } else if (line.length > 5) {
+        } else if (line.length > 5 && !line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i)) {
           currentProduct.indication += " " + line;
         }
       } else if (currentSection === "packSize") {
@@ -242,6 +246,10 @@ function parseProductMarkdown(content: string): ParsedCategory[] {
               currentProduct.packSizes.push(size);
             }
           }
+        } else if (line.match(/^(Bioflex|Biomedical|Biogyl|Bioferex|Bioper|Excoff|Ipec|CAPD)\s+/i)) {
+          // If we hit a brand name while in packSize section, it means we've moved to a new product
+          // Reset section and let the product detection handle it
+          currentSection = null;
         }
       }
     }

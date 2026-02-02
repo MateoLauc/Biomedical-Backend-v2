@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpError, badRequest } from "../lib/http-errors";
+import { HttpError } from "../lib/http-errors";
 import { logger } from "../lib/logger";
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
@@ -15,6 +15,21 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
         message: err.expose ? err.message : "Internal server error",
         requestId
       }
+    });
+  }
+
+  // Multer / upload errors (file size, file type)
+  if (err && typeof err === "object" && "code" in err) {
+    const code = (err as { code?: string }).code;
+    if (code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        error: { code: "BAD_REQUEST", message: "Image file is too large. Maximum size is 5 MB.", requestId }
+      });
+    }
+  }
+  if (err instanceof Error && (err.message.includes("Only image files") || err.message.includes("Unexpected field"))) {
+    return res.status(400).json({
+      error: { code: "BAD_REQUEST", message: err.message, requestId }
     });
   }
 

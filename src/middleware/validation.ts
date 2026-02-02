@@ -129,3 +129,18 @@ export function validateBody(schema: z.ZodSchema) {
     }
   };
 }
+
+export function validateQuery(schema: z.ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      req.query = schema.parse(req.query) as Request["query"];
+      next();
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const userFriendlyMessage = formatZodError(err);
+        throw badRequest(userFriendlyMessage);
+      }
+      next(err);
+    }
+  };
+}

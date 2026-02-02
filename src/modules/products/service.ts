@@ -1,6 +1,6 @@
 import { productsRepo } from "./repo";
 import { badRequest, notFound } from "../../lib/http-errors";
-import type { CategoryInput, ProductInput, ProductVariantInput, ProductWithVariants } from "./types";
+import type { Category, CategoryInput, ProductInput, ProductVariantInput, ProductWithVariants } from "./types";
 
 function slugify(text: string): string {
   return text
@@ -45,7 +45,41 @@ export const productsService = {
   },
 
   async listCategories() {
-    return productsRepo.listCategories();
+    const categories = await productsRepo.listCategories();
+    return { categories };
+  },
+
+  async listCategoriesTree() {
+    // Get all categories
+    const allCategories = await productsRepo.listCategories();
+    
+    // Build tree structure
+    const categoryMap = new Map<string, Category & { subCategories: Category[] }>();
+    const rootCategories: (Category & { subCategories: Category[] })[] = [];
+
+    // Initialize all categories with empty subCategories array
+    for (const category of allCategories) {
+      categoryMap.set(category.id, { ...category, subCategories: [] });
+    }
+
+    // Build the tree
+    for (const category of allCategories) {
+      const categoryWithChildren = categoryMap.get(category.id);
+      if (!categoryWithChildren) continue;
+
+      if (category.parentCategoryId) {
+        // This is a sub-category, add it to parent's subCategories
+        const parent = categoryMap.get(category.parentCategoryId);
+        if (parent) {
+          parent.subCategories.push(categoryWithChildren);
+        }
+      } else {
+        // This is a root category
+        rootCategories.push(categoryWithChildren);
+      }
+    }
+
+    return { categories: rootCategories };
   },
 
   async updateCategory(id: string, input: Partial<CategoryInput>) {
