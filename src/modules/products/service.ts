@@ -144,6 +144,9 @@ export const productsService = {
     if (input.indication) {
       productData.indication = input.indication.trim();
     }
+    if (input.imageUrl !== undefined) {
+      productData.imageUrl = input.imageUrl && input.imageUrl.trim() ? input.imageUrl.trim() : null;
+    }
     const product = await productsRepo.createProduct(productData);
 
     return {
@@ -289,6 +292,9 @@ export const productsService = {
         throw badRequest("A product with this slug already exists.");
       }
       updateData.slug = input.slug;
+    }
+    if (input.imageUrl !== undefined) {
+      updateData.imageUrl = input.imageUrl && input.imageUrl.trim() ? input.imageUrl.trim() : null;
     }
 
     return productsRepo.updateProduct(id, updateData);

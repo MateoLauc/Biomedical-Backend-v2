@@ -64,6 +64,13 @@
       "when": 1769920200000,
       "tag": "0008_create_user_devices_table",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1769920300000,
+      "tag": "0009_add_product_image_url",
+      "breakpoints": true
     }
   ]
 }
