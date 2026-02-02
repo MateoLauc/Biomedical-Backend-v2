@@ -1,4 +1,0 @@
-# Project rules
-
-## Git commits
-- **Do not** add "Co-authored-by: Cursor" or any Co-authored-by trailer to commit messages. Use only the commit message provided (e.g. "feat: ..."); no co-author attribution.
