@@ -2,3 +2,11 @@ node_modules
 npm-cache
 dist
 .env
+
+.cursorrules
+product.md
+products.md
+press.md
+careers.md
+careers.d
+postman/
