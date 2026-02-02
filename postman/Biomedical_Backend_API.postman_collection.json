@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Biomedical Backend API",
-    "description": "Complete API collection for Biomedical Backend - a production-grade medication e-commerce platform.\n\n## Features\n- Authentication & Authorization (JWT-based)\n- User Management\n- Product Catalog\n- Shopping Cart\n- Order Management\n- Admin Dashboard\n\n## Base URL\nDefault: `http://localhost:4000`\n\n## Authentication\nMost endpoints require authentication via JWT access token in the `Authorization: Bearer <token>` header.\n\n## Collection Variables\n- `baseUrl`: API base URL (default: http://localhost:4000)\n- `accessToken`: JWT access token (auto-saved after signin/refresh)\n\n## Testing Flow\n1. Start with **Health Check** to verify server\n2. Use **Auth** folder endpoints for authentication\n3. Access token is automatically saved after signin/refresh\n4. Use saved token for protected endpoints",
+    "description": "Complete API collection for Biomedical Backend - a production-grade medication e-commerce platform.\n\n## Modules\n- **Health** — Server health check\n- **Auth** — Signup, signin, email verification, password reset/change, refresh, logout\n- **Products** — Categories (tree/flat), products, variants (admin CRUD)\n- **Cart** — Get, add, update, remove, clear (auth required)\n- **Shipping** — Shipping addresses CRUD (auth required)\n- **Orders** — Create from cart, list, get, verify payment, update status (admin), cancel, webhook\n- **Admin** — List users, update verification, dashboard, inventory (admin only)\n- **User** — Get/update profile (auth required)\n- **Notifications** — List, get, mark read, mark all read (auth required)\n- **Careers** — Jobs list/get (public), create/update/delete (admin)\n- **Blog** — Posts list/get by id or slug (public), create/update/delete/upload image (admin)\n\n## Base URL & Auth\n- Use **Environments** (Development / Production) for `baseUrl` and `accessToken`.\n- After **Signin** or **Refresh Token**, the access token is saved to the active environment (and collection fallback).\n- Protected requests use `Authorization: Bearer {{accessToken}}`.\n\n## Recommended Flow\n1. Select **Biomedical Backend - Development** (or Production) environment.\n2. Run **Health Check** to verify the server.\n3. Run **Auth → Signin**; token is auto-saved.\n4. Use any protected endpoint; token is sent automatically.\n\n## Standard error response\nAll errors return JSON in this shape:\n```json\n{\n  \"error\": {\n    \"code\": \"BAD_REQUEST\" | \"UNAUTHORIZED\" | \"FORBIDDEN\" | \"NOT_FOUND\" | \"TOO_MANY_REQUESTS\" | \"INTERNAL_SERVER_ERROR\",\n    \"message\": \"Human-readable message.\",\n    \"requestId\": \"optional-uuid\"\n  }\n}\n```\nStatus code matches the error (e.g. 400 for BAD_REQUEST, 401 for UNAUTHORIZED).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -27,8 +27,18 @@
           "host": ["{{baseUrl}}"],
           "path": ["health"]
         },
-        "description": "Check if the API server is running and healthy.\n\n**Response:**\n- `200 OK`: Server is healthy\n- Returns: `{ ok: true, env: string, uptimeSeconds: number, timestamp: string }`"
-      }
+        "description": "Check if the API server is running and healthy.\n\n**Response (200 OK):**\n```json\n{\n  \"ok\": true,\n  \"env\": \"development\",\n  \"uptimeSeconds\": 120,\n  \"timestamp\": \"2026-01-20T12:00:00.000Z\"\n}\n```"
+      },
+      "response": [
+        {
+          "name": "200 OK - Server healthy",
+          "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] } },
+          "status": "OK",
+          "code": 200,
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"ok\": true,\n  \"env\": \"development\",\n  \"uptimeSeconds\": 120,\n  \"timestamp\": \"2026-01-20T12:00:00.000Z\"\n}"
+        }
+      ]
     },
     {
       "name": "Auth",
@@ -73,8 +83,17 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "auth", "signup"]
             },
-            "description": "Create a new user account.\n\n**Request Body:**\n- `firstName` (string, required): User's first name\n- `lastName` (string, required): User's last name\n- `whoYouAre` (string, required): User's profession/role description\n- `email` (string, required): Valid email address\n- `phoneNumber` (string, required): Phone number\n- `password` (string, required, min 8 chars): User password\n- `countryOfPractice` (string, required): Country where user practices\n\n**Response:**\n- `201 Created`: User created successfully\n- Returns: `{ user: { id, role, firstName, lastName, email, ... } }`\n- Verification email sent automatically (check Mailtrap or server logs)\n\n**Note:** Password is never returned in response. Email verification token is sent via email."
-          }
+            "description": "Create a new user account.\n\n**Request body (example):**\n- `firstName`, `lastName`, `whoYouAre`, `email`, `phoneNumber`, `password` (min 8 chars), `countryOfPractice` (all required).\n\n**Response (201 Created):**\n```json\n{\n  \"user\": {\n    \"id\": \"uuid\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"countryOfPractice\": \"USA\",\n    \"whoYouAre\": \"Pharmacist\",\n    \"emailVerifiedAt\": null,\n    \"identityVerified\": false,\n    \"businessLicenseStatus\": \"not_submitted\",\n    \"prescriptionAuthorityStatus\": \"not_submitted\",\n    \"createdAt\": \"2026-01-20T12:00:00.000Z\",\n    \"updatedAt\": \"2026-01-20T12:00:00.000Z\"\n  }\n}\n```\nVerification email is sent automatically (check Mailtrap or server logs). Password is never returned."
+          },
+          "response": [
+            {
+              "name": "201 Created - User created",
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"countryOfPractice\": \"USA\",\n    \"whoYouAre\": \"Pharmacist\",\n    \"emailVerifiedAt\": null,\n    \"identityVerified\": false,\n    \"businessLicenseStatus\": \"not_submitted\",\n    \"prescriptionAuthorityStatus\": \"not_submitted\",\n    \"createdAt\": \"2026-01-20T12:00:00.000Z\",\n    \"updatedAt\": \"2026-01-20T12:00:00.000Z\"\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Signin",
@@ -86,10 +105,13 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
-                  "    console.log('Access Token saved:', jsonData.accessToken);",
+                  "    const token = jsonData.accessToken;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "        if (pm.environment && pm.environment.name) pm.environment.set('accessToken', token);",
+                  "    }",
+                  "    console.log('Access token saved to variables');",
                   "    console.log('User:', jsonData.user);",
-                  "    console.log('Refresh token saved in cookie');",
                   "}"
                 ]
               }
@@ -117,8 +139,24 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "auth", "signin"]
             },
-            "description": "Sign in with email and password to get access and refresh tokens.\n\n**Request Body:**\n- `email` (string, required): User's email address\n- `password` (string, required): User's password\n\n**Response:**\n- `200 OK`: Sign in successful\n- Returns: `{ user: {...}, accessToken: string }`\n- Sets httpOnly `refreshToken` cookie (handled automatically by Postman)\n- Access token is automatically saved to collection variable `accessToken`\n\n**Error Responses:**\n- `401 Unauthorized`: Invalid email or password\n\n**Note:** Access token expires in 15 minutes. Use Refresh Token endpoint to get a new one."
-          }
+            "description": "Sign in with email and password to get access and refresh tokens.\n\n**Request body (example):**\n- `email` (string), `password` (string) — both required.\n\n**Response (200 OK):**\n```json\n{\n  \"user\": {\n    \"id\": \"uuid\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"emailVerifiedAt\": \"2026-01-20T12:00:00.000Z\",\n    \"identityVerified\": true\n  },\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}\n```\nThe server also sets an httpOnly `refreshToken` cookie. The collection script saves `accessToken` to your environment.\n\n**Error (401 Unauthorized):**\n```json\n{\n  \"error\": {\n    \"code\": \"UNAUTHORIZED\",\n    \"message\": \"Invalid email or password.\",\n    \"requestId\": \"optional-uuid\"\n  }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "200 OK - Signin success",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"emailVerifiedAt\": \"2026-01-20T12:00:00.000Z\",\n    \"identityVerified\": true\n  },\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "401 Unauthorized - Bad credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"error\": {\n    \"code\": \"UNAUTHORIZED\",\n    \"message\": \"Invalid email or password.\",\n    \"requestId\": null\n  }\n}"
+            }
+          ]
         },
         {
           "name": "Verify Email",
@@ -270,8 +308,12 @@
                 "exec": [
                   "if (pm.response.code === 200) {",
                   "    const jsonData = pm.response.json();",
-                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
-                  "    console.log('New Access Token saved:', jsonData.accessToken);",
+                  "    const token = jsonData.accessToken;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "        if (pm.environment && pm.environment.name) pm.environment.set('accessToken', token);",
+                  "    }",
+                  "    console.log('New access token saved to variables');",
                   "}"
                 ]
               }
@@ -285,8 +327,17 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "auth", "refresh"]
             },
-            "description": "Refresh access token using refresh token from cookie.\n\n**Request:**\n- No body required\n- Reads `refreshToken` from httpOnly cookie (handled automatically by Postman)\n\n**Response:**\n- `200 OK`: New access token issued\n- Returns: `{ accessToken: string }`\n- Sets new refresh token cookie (old one revoked, new one issued)\n- New access token automatically saved to collection variable\n\n**Error Responses:**\n- `400 Bad Request`: Refresh token not provided in cookie\n- `401 Unauthorized`: Invalid, expired, or revoked refresh token\n\n**Note:**\n- Refresh tokens are rotated on each use (old one revoked)\n- Access token expires in 15 minutes\n- Refresh token expires in 30 days"
-          }
+            "description": "Refresh access token using refresh token from cookie.\n\n**Request:** No body. Uses httpOnly `refreshToken` cookie (Postman sends it automatically).\n\n**Response (200 OK):**\n```json\n{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}\n```\nNew refresh token cookie is set; the script saves `accessToken` to your environment.\n\n**Error (400):** No refresh token in cookie — `{ \"error\": { \"code\": \"BAD_REQUEST\", \"message\": \"Your session has expired. Please sign in again.\" } }`\n\n**Error (401):** Invalid/expired/revoked token — `{ \"error\": { \"code\": \"UNAUTHORIZED\", \"message\": \"...\" } }`"
+          },
+          "response": [
+            {
+              "name": "200 OK - New access token",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            }
+          ]
         },
         {
           "name": "Logout",
@@ -299,6 +350,594 @@
               "path": ["api", "v1", "auth", "logout"]
             },
             "description": "Logout user by revoking refresh token.\n\n**Request:**\n- No body required\n- Reads `refreshToken` from httpOnly cookie (handled automatically by Postman)\n\n**Response:**\n- `200 OK`: Logged out successfully\n- Returns: `{ message: \"Logged out successfully\" }`\n- Clears refresh token cookie\n- Revokes refresh token in database\n\n**Note:**\n- Access token remains valid until it expires (15 minutes)\n- Refresh token is immediately revoked and cannot be used again"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "description": "Product catalog: categories (with hierarchy), products, and variants.\n\n- **Categories**: List (flat or tree), get by ID; create/update/delete require admin.\n- **Products**: List with filters (categoryId, isActive, requiresApproval, pagination), get by ID; create/update/delete require admin.\n- **Variants**: Create/update/delete require admin (productId, packSize, price, stockQuantity).",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories"] },
+            "description": "List all categories (flat). Public. No auth.\n\n**Response (200 OK):**\n```json\n[\n  { \"id\": \"uuid\", \"name\": \"Medications\", \"slug\": \"medications\", \"parentId\": null },\n  { \"id\": \"uuid\", \"name\": \"Sub-category\", \"slug\": \"sub-category\", \"parentId\": \"parent-uuid\" }\n]\n```"
+          }
+        },
+        {
+          "name": "List Categories (Tree)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories/tree", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories", "tree"] },
+            "description": "List categories as a tree (parent/children). Public."
+          }
+        },
+        {
+          "name": "Get Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a category by ID. Public."
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Medications\",\n  \"slug\": \"medications\",\n  \"description\": \"Pharmaceutical products\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories"] },
+            "description": "Create a category. Admin only. Body: name (required), slug (optional), description (optional)."
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Medications Updated\",\n  \"description\": \"Updated description\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a category. Admin only."
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/categories/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "categories", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a category. Admin only."
+          }
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "categoryId", "value": "", "disabled": true}, {"key": "isActive", "value": "true", "disabled": true}] },
+            "description": "List products. Public. No auth.\n\n**Query params:** `page` (default 1), `limit` (default 20), optional `categoryId` (UUID), `isActive` (true), `requiresApproval` (true).\n\n**Response (200 OK):**\n```json\n{\n  \"products\": [\n    { \"id\": \"uuid\", \"name\": \"Product Name\", \"slug\": \"product-name\", \"categoryId\": \"...\", \"requiresApproval\": false, \"variants\": [...] }\n  ],\n  \"pagination\": { \"page\": 1, \"limit\": 20, \"total\": 50, \"totalPages\": 3 }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "200 OK - Paginated products",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"products\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n      \"name\": \"Paracetamol 500mg\",\n      \"slug\": \"paracetamol-500mg\",\n      \"categoryId\": \"...\",\n      \"requiresApproval\": false,\n      \"variants\": [{ \"id\": \"...\", \"packSize\": \"30 tablets\", \"price\": \"25.99\" }]\n    }\n  ],\n  \"pagination\": { \"page\": 1, \"limit\": 20, \"total\": 50, \"totalPages\": 3 }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a product by ID. Public."
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"categoryId\": \"<uuid>\",\n  \"name\": \"Product Name\",\n  \"slug\": \"product-name\",\n  \"description\": \"Description\",\n  \"requiresApproval\": false,\n  \"stockQuantity\": 100,\n  \"lowStockThreshold\": 10\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products"] },
+            "description": "Create a product. Admin only. Requires categoryId (UUID), name, requiresApproval (boolean)."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"name\": \"Updated Name\",\n  \"stockQuantity\": 50\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a product. Admin only."
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a product. Admin only."
+          }
+        },
+        {
+          "name": "Create Product Variant",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"productId\": \"<uuid>\",\n  \"packSize\": \"30 tablets\",\n  \"price\": \"25.99\",\n  \"stockQuantity\": 100\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products/variants", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "variants"] },
+            "description": "Create a product variant. Admin only. price must be decimal string (e.g. \"25.99\")."
+          }
+        },
+        {
+          "name": "Update Product Variant",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"packSize\": \"60 tablets\",\n  \"price\": \"45.99\",\n  \"stockQuantity\": 50\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/products/variants/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "variants", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a product variant. Admin only."
+          }
+        },
+        {
+          "name": "Delete Product Variant",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/products/variants/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "products", "variants", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a product variant. Admin only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "description": "Shopping cart. All endpoints require authentication. Add items by product variant ID and quantity; update or remove items; clear cart.",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/cart", "host": ["{{baseUrl}}"], "path": ["api", "v1", "cart"] },
+            "description": "Get current user's cart with items. Requires `Authorization: Bearer {{accessToken}}`.\n\n**Response (200 OK):**\n```json\n{\n  \"cart\": {\n    \"items\": [\n      {\n        \"id\": \"cart-item-uuid\",\n        \"productVariantId\": \"variant-uuid\",\n        \"quantity\": 2,\n        \"product\": { \"name\": \"Product Name\", \"...\": \"...\" },\n        \"variant\": { \"packSize\": \"30 tablets\", \"price\": \"25.99\" }\n      }\n    ]\n  }\n}\n```\nEmpty cart: `{ \"cart\": { \"items\": [] } }`."
+          },
+          "response": [
+            {
+              "name": "200 OK - Cart with items",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"cart\": {\n    \"items\": [\n      {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"productVariantId\": \"660e8400-e29b-41d4-a716-446655440001\",\n        \"quantity\": 2,\n        \"product\": { \"id\": \"...\", \"name\": \"Paracetamol 500mg\" },\n        \"variant\": { \"packSize\": \"30 tablets\", \"price\": \"25.99\" }\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add to Cart",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"productVariantId\": \"<variant-uuid>\",\n  \"quantity\": 2\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/cart", "host": ["{{baseUrl}}"], "path": ["api", "v1", "cart"] },
+            "description": "Add an item to cart. Body: productVariantId (UUID), quantity (1–100). Auth required."
+          }
+        },
+        {
+          "name": "Update Cart Item",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"quantity\": 3\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "cart", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update quantity of a cart item. :id is cart item ID. Auth required."
+          }
+        },
+        {
+          "name": "Remove from Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/cart/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "cart", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Remove an item from cart. Auth required."
+          }
+        },
+        {
+          "name": "Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/cart", "host": ["{{baseUrl}}"], "path": ["api", "v1", "cart"] },
+            "description": "Remove all items from cart. Auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shipping",
+      "description": "Shipping addresses for the current user. All endpoints require authentication. Create, list, get, update, delete addresses; optionally set default.",
+      "item": [
+        {
+          "name": "List Shipping Addresses",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/shipping", "host": ["{{baseUrl}}"], "path": ["api", "v1", "shipping"] },
+            "description": "List current user's shipping addresses. Auth required."
+          }
+        },
+        {
+          "name": "Get Shipping Address",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/shipping/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "shipping", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a shipping address by ID. Auth required."
+          }
+        },
+        {
+          "name": "Create Shipping Address",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"deliveryAddress\": \"123 Main St, City\",\n  \"region\": \"Lagos\",\n  \"isDefault\": true\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/shipping", "host": ["{{baseUrl}}"], "path": ["api", "v1", "shipping"] },
+            "description": "Create a shipping address. Required: firstName, lastName, phoneNumber, deliveryAddress, region. Optional: additionalPhoneNumber, additionalInformation, message, isDefault. Auth required."
+          }
+        },
+        {
+          "name": "Update Shipping Address",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"deliveryAddress\": \"456 New St\",\n  \"isDefault\": true\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/shipping/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "shipping", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a shipping address. Auth required."
+          }
+        },
+        {
+          "name": "Delete Shipping Address",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/shipping/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "shipping", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a shipping address. Auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "Orders and payments. Create order from cart (shippingAddressId, optional notes/callbackUrl); list/get orders; verify Paystack payment; admin can update status; cancel with reason. Webhook is public (Paystack signature).",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"shippingAddressId\": \"<address-uuid>\",\n  \"notes\": \"Please leave at door\",\n  \"callbackUrl\": \"https://yourapp.com/order/complete\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/orders", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders"] },
+            "description": "Create order from current cart. Requires `shippingAddressId` (UUID). Optional: `notes`, `callbackUrl` (Paystack redirect after payment). Auth required.\n\n**Request body (example):**\n```json\n{\n  \"shippingAddressId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"notes\": \"Leave at door\",\n  \"callbackUrl\": \"https://yourapp.com/order/complete\"\n}\n```\n\n**Response (201 Created):**\n```json\n{\n  \"message\": \"Order created successfully.\",\n  \"order\": { \"id\": \"uuid\", \"orderNumber\": \"ORD-001\", \"status\": \"pending\", \"paymentStatus\": \"pending\", \"...\": \"...\" },\n  \"paymentAuthorizationUrl\": \"https://checkout.paystack.com/...\"\n}\n```\nRedirect the user to `paymentAuthorizationUrl` to complete payment."
+          },
+          "response": [
+            {
+              "name": "201 Created - Order + payment URL",
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"message\": \"Order created successfully.\",\n  \"order\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"orderNumber\": \"ORD-20260120-001\",\n    \"status\": \"pending\",\n    \"paymentStatus\": \"pending\",\n    \"totalAmount\": \"51.98\",\n    \"shippingAddressId\": \"...\"\n  },\n  \"paymentAuthorizationUrl\": \"https://checkout.paystack.com/...\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Orders",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "status", "value": "", "disabled": true}, {"key": "paymentStatus", "value": "", "disabled": true}] },
+            "description": "List current user's orders. Query: page, limit, status, paymentStatus. Auth required."
+          }
+        },
+        {
+          "name": "Get Order",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get order by ID. Auth required."
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/verify-payment?reference=<paystack-reference>", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders", "verify-payment"], "query": [{"key": "reference", "value": "<paystack-reference>"}] },
+            "description": "Verify Paystack payment by reference. Auth required."
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"status\": \"processing\",\n  \"notes\": \"Picked for dispatch\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/:id/status", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders", ":id", "status"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update order status. Admin only. status: pending, processing, shipped, delivered, cancelled."
+          }
+        },
+        {
+          "name": "Cancel Order",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"reason\": \"Changed my mind, will reorder later\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/:id/cancel", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders", ":id", "cancel"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Cancel an order. Body: reason (5–500 chars). Auth required."
+          }
+        },
+        {
+          "name": "Webhook (Paystack)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/webhook", "host": ["{{baseUrl}}"], "path": ["api", "v1", "orders", "webhook"] },
+            "description": "Paystack webhook. No auth; verified by Paystack signature. Used by Paystack to notify payment events."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Admin-only endpoints. Require role super_admin or admin. List users (with filters), update user verification status (business license, prescription authority), dashboard stats, inventory overview.",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/users?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "users"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "role", "value": "", "disabled": true}, {"key": "identityVerified", "value": "", "disabled": true}, {"key": "businessLicenseStatus", "value": "", "disabled": true}, {"key": "prescriptionAuthorityStatus", "value": "", "disabled": true}] },
+            "description": "List users with filters. Query: role (super_admin, admin, customer), identityVerified (true/false), businessLicenseStatus (not_submitted, pending, approved, rejected), prescriptionAuthorityStatus, page, limit. Admin only."
+          }
+        },
+        {
+          "name": "Update User Verification",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"businessLicenseStatus\": \"approved\",\n  \"prescriptionAuthorityStatus\": \"pending\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/users/:id/verification", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "users", ":id", "verification"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a user's verification status. At least one of businessLicenseStatus or prescriptionAuthorityStatus required. Values: not_submitted, pending, approved, rejected. Admin only."
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/dashboard", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "dashboard"] },
+            "description": "Dashboard stats: total users, products, orders, revenue, pending verifications, low stock count, orders by status. Admin only."
+          }
+        },
+        {
+          "name": "Inventory Overview",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/inventory", "host": ["{{baseUrl}}"], "path": ["api", "v1", "admin", "inventory"] },
+            "description": "Inventory counts: total products, available, out of stock, low stock. Admin only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "description": "Current user profile. All require authentication. Get profile (GET /me), update profile (PATCH /me).",
+      "item": [
+        {
+          "name": "Get Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/users/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "me"] },
+            "description": "Get current user profile. Requires `Authorization: Bearer {{accessToken}}`.\n\n**Response (200 OK):**\n```json\n{\n  \"user\": {\n    \"id\": \"uuid\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"countryOfPractice\": \"Nigeria\",\n    \"whoYouAre\": \"Pharmacist\",\n    \"emailVerifiedAt\": \"...\",\n    \"identityVerified\": true,\n    \"businessLicenseStatus\": \"approved\",\n    \"prescriptionAuthorityStatus\": \"pending\",\n    \"createdAt\": \"...\",\n    \"updatedAt\": \"...\"\n  }\n}\n```"
+          },
+          "response": [
+            {
+              "name": "200 OK - Profile",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"role\": \"customer\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"countryOfPractice\": \"Nigeria\",\n    \"whoYouAre\": \"Pharmacist\",\n    \"emailVerifiedAt\": \"2026-01-20T12:00:00.000Z\",\n    \"identityVerified\": true,\n    \"businessLicenseStatus\": \"approved\",\n    \"prescriptionAuthorityStatus\": \"pending\",\n    \"createdAt\": \"2026-01-20T12:00:00.000Z\",\n    \"updatedAt\": \"2026-01-20T12:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"countryOfPractice\": \"Nigeria\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/users/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "users", "me"] },
+            "description": "Update current user profile. Optional: firstName, lastName, whoYouAre, phoneNumber, countryOfPractice, email. Auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "User notifications. All require authentication. List (optional unreadOnly, page, limit), get by ID, mark one as read, mark all as read.",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "unreadOnly", "value": "true", "disabled": true}] },
+            "description": "List current user's notifications. Query: unreadOnly (true/false), page, limit. Auth required."
+          }
+        },
+        {
+          "name": "Get Notification",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a notification by ID. Auth required."
+          }
+        },
+        {
+          "name": "Mark as Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications/:id/read", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications", ":id", "read"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Mark a notification as read. Auth required."
+          }
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/notifications/read-all", "host": ["{{baseUrl}}"], "path": ["api", "v1", "notifications", "read-all"] },
+            "description": "Mark all notifications as read. Auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Careers",
+      "description": "Job postings. List and get by ID are public. Create, update, delete require admin. Query list with status (open/closed), page, limit.",
+      "item": [
+        {
+          "name": "List Jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/careers/jobs?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "careers", "jobs"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "status", "value": "open", "disabled": true}] },
+            "description": "List job postings. Query: status (open, closed), page, limit. Public."
+          }
+        },
+        {
+          "name": "Get Job",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/careers/jobs/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "careers", "jobs", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a job by ID. Public."
+          }
+        },
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"Senior Pharmacist\",\n  \"type\": \"Full-time\",\n  \"department\": \"Pharmacy\",\n  \"icon\": \"pill\",\n  \"responsibilities\": [\"Dispense medications\", \"Counsel patients\"],\n  \"status\": \"open\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/careers/jobs", "host": ["{{baseUrl}}"], "path": ["api", "v1", "careers", "jobs"] },
+            "description": "Create a job posting. Admin only. status: open, closed."
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"status\": \"closed\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/careers/jobs/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "careers", "jobs", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a job posting. Admin only."
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/careers/jobs/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "careers", "jobs", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a job posting. Admin only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "description": "Blog posts. List, get by ID or slug are public. Create, update, delete, upload image require admin. Types: press_releases, videos, news_article. Slug auto-generated from title if omitted. Upload image first (POST /upload-image), then use returned URL as imageUrl in create/update.",
+      "item": [
+        {
+          "name": "List Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts"], "query": [{"key": "page", "value": "1"}, {"key": "limit", "value": "20"}, {"key": "type", "value": "", "disabled": true}, {"key": "status", "value": "", "disabled": true}] },
+            "description": "List blog posts. Query: type (press_releases, videos, news_article), status (draft, published), page, limit. Public."
+          }
+        },
+        {
+          "name": "Get Post by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Get a blog post by ID. Public."
+          }
+        },
+        {
+          "name": "Get Post by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts/slug/:slug", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts", "slug", ":slug"], "variable": [{"key": "slug", "value": "my-blog-post"}] },
+            "description": "Get a blog post by slug. Public."
+          }
+        },
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"New Blog Post\",\n  \"body\": \"Full post content here.\",\n  \"slug\": \"new-blog-post\",\n  \"imageUrl\": \"https://res.cloudinary.com/...\",\n  \"type\": \"news_article\",\n  \"status\": \"draft\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts"] },
+            "description": "Create a blog post. Admin only. type: press_releases, videos, news_article. status: draft, published. Slug optional (auto from title)."
+          }
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"Updated Title\",\n  \"status\": \"published\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Update a blog post. Admin only."
+          }
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/posts/:id", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "posts", ":id"], "variable": [{"key": "id", "value": ""}] },
+            "description": "Delete a blog post. Admin only."
+          }
+        },
+        {
+          "name": "Upload Blog Image",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": [], "description": "Image file (JPEG, PNG, GIF, WebP, max 5 MB)"}]},
+            "url": { "raw": "{{baseUrl}}/api/v1/blog/upload-image", "host": ["{{baseUrl}}"], "path": ["api", "v1", "blog", "upload-image"] },
+            "description": "Upload an image for blog posts. Admin only. Use multipart form with field 'image'. Response includes url; use that as imageUrl when creating/updating a post. Requires Cloudinary config."
           }
         }
       ]
