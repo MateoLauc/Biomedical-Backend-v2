@@ -6,7 +6,7 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup api/index.ts --out-dir dist/api --format esm --platform node --target node18 --clean",
+    "build": "tsup api/index.ts --out-dir dist --format esm --platform node --target node18 --clean",
     "build:legacy": "tsc -p tsconfig.json && node scripts/add-js-extensions.mjs",
     "start": "tsx src/server.ts",
     "test": "vitest run",
