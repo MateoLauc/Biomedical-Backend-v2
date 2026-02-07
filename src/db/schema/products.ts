@@ -14,6 +14,7 @@ export const products = pgTable(
     description: text("description"),
     composition: text("composition"),
     indication: text("indication"),
+    imageUrl: text("image_url"),
     requiresApproval: boolean("requires_approval").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
     stockQuantity: integer("stock_quantity").notNull().default(0),

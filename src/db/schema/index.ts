@@ -3,6 +3,7 @@ export * from "./users";
 export * from "./refresh-tokens";
 export * from "./email-verification-tokens";
 export * from "./password-reset-tokens";
+export * from "./user-devices";
 export * from "./audit-logs";
 export * from "./categories";
 export * from "./products";

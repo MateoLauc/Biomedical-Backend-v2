@@ -16,11 +16,16 @@ const envSchema = z.object({
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
   JWT_REFRESH_TTL_SECONDS: z.coerce.number().int().positive().default(30 * 24 * 60 * 60),
 
-  MAILTRAP_HOST: z.string().optional(),
-  MAILTRAP_PORT: z.coerce.number().int().positive().optional(),
-  MAILTRAP_USER: z.string().optional(),
-  MAILTRAP_PASS: z.string().optional(),
+  MAILTRAP_API_KEY: z.string().optional(),
+  MAILTRAP_USE_SANDBOX: z.string().optional(),
+  MAILTRAP_INBOX_ID: z.coerce.number().int().positive().optional(),
   MAIL_FROM: z.string().optional(),
+
+  BRAND_LOGO_URL: z.string().optional(),
+  BRAND_PRIMARY_COLOR: z.string().optional(),
+  BRAND_PRIMARY_50: z.string().optional(),
+  BRAND_BG_COLOR: z.string().optional(),
+  BRAND_TEXT_COLOR: z.string().optional(),
 
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),

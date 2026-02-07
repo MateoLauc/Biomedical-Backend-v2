@@ -31,13 +31,6 @@
       "breakpoints": true
     },
     {
-      "idx": 3,
-      "version": "7",
-      "when": 1769415778465,
-      "tag": "0003_silent_blonde_phantom",
-      "breakpoints": true
-    },
-    {
       "idx": 4,
       "version": "7",
       "when": 1769918973689,
@@ -63,6 +56,20 @@
       "version": "7",
       "when": 1769920100000,
       "tag": "0007_add_blog_post_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1769920200000,
+      "tag": "0008_create_user_devices_table",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1769920300000,
+      "tag": "0009_add_product_image_url",
       "breakpoints": true
     }
   ]

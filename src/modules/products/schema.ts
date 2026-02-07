@@ -19,6 +19,12 @@ export const createProductSchema = z.object({
   description: z.string().max(5000, "Description must be no more than 5000 characters.").optional(),
   composition: z.string().max(5000, "Composition must be no more than 5000 characters.").optional(),
   indication: z.string().max(5000, "Indication must be no more than 5000 characters.").optional(),
+  imageUrl: z
+    .union([
+      z.string().url("Invalid image URL.").max(2000, "Image URL must be no more than 2000 characters."),
+      z.literal("")
+    ])
+    .optional(),
   requiresApproval: z.boolean(),
   stockQuantity: z.number().int().min(0, "Stock quantity must be 0 or greater.").optional(),
   lowStockThreshold: z.number().int().min(0, "Low stock threshold must be 0 or greater.").optional()
@@ -31,6 +37,12 @@ export const updateProductSchema = z.object({
   description: z.string().max(5000, "Description must be no more than 5000 characters.").optional(),
   composition: z.string().max(5000, "Composition must be no more than 5000 characters.").optional(),
   indication: z.string().max(5000, "Indication must be no more than 5000 characters.").optional(),
+  imageUrl: z
+    .union([
+      z.string().url("Invalid image URL.").max(2000, "Image URL must be no more than 2000 characters."),
+      z.literal("")
+    ])
+    .optional(),
   requiresApproval: z.boolean().optional(),
   stockQuantity: z.number().int().min(0, "Stock quantity must be 0 or greater.").optional(),
   lowStockThreshold: z.number().int().min(0, "Low stock threshold must be 0 or greater.").optional()
