@@ -5,22 +5,22 @@ import cookieParser from "cookie-parser";
 import { pinoHttp } from "pino-http";
 import type { RequestHandler } from "express";
 
-import { corsOrigins, env, isProd } from "./config/env";
-import { logger } from "./lib/logger";
-import { requestIdMiddleware } from "./middleware/request-id";
-import { apiRateLimiter } from "./middleware/rate-limit";
-import { errorHandler } from "./middleware/error-handler";
-import { Sentry, isSentryEnabled } from "./lib/sentry";
-import { authRoutes } from "./modules/auth/routes";
-import { productsRoutes } from "./modules/products/routes";
-import { cartRoutes } from "./modules/cart/routes";
-import { shippingRoutes } from "./modules/shipping/routes";
-import { ordersRoutes } from "./modules/orders/routes";
-import { adminRoutes } from "./modules/admin/routes";
-import { userRoutes } from "./modules/user/routes";
-import { notificationsRoutes } from "./modules/notifications/routes";
-import { careersRoutes } from "./modules/careers/routes";
-import { blogRoutes } from "./modules/blog/routes";
+import { corsOrigins, env, isProd } from "./config/env.js";
+import { logger } from "./lib/logger.js";
+import { requestIdMiddleware } from "./middleware/request-id.js";
+import { apiRateLimiter } from "./middleware/rate-limit.js";
+import { errorHandler } from "./middleware/error-handler.js";
+import { Sentry, isSentryEnabled } from "./lib/sentry.js";
+import { authRoutes } from "./modules/auth/routes.js";
+import { productsRoutes } from "./modules/products/routes.js";
+import { cartRoutes } from "./modules/cart/routes.js";
+import { shippingRoutes } from "./modules/shipping/routes.js";
+import { ordersRoutes } from "./modules/orders/routes.js";
+import { adminRoutes } from "./modules/admin/routes.js";
+import { userRoutes } from "./modules/user/routes.js";
+import { notificationsRoutes } from "./modules/notifications/routes.js";
+import { careersRoutes } from "./modules/careers/routes.js";
+import { blogRoutes } from "./modules/blog/routes.js";
 
 export function createApp(): Express {
   const app = express();
