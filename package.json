@@ -6,7 +6,7 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/add-js-extensions.mjs",
     "start": "tsx src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
