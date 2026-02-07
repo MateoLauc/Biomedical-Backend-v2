@@ -59,6 +59,17 @@ export function createApp(): Express {
     });
   });
 
+  // Friendly root page
+  app.get("/", (_req, res) => {
+    res.send(`<html>
+      <head><title>Biomedical Backend</title></head>
+      <body style="font-family:system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px;">
+        <h1>Biomedical Backend</h1>
+        <p>Health check: <a href="/health">/health</a></p>
+      </body>
+    </html>`);
+  });
+
   app.use("/api/v1", apiRateLimiter);
   app.use("/api/v1/auth", authRoutes);
   app.use("/api/v1/products", productsRoutes);
