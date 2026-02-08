@@ -59,6 +59,16 @@ export function createApp(): Express {
     });
   });
 
+  // Debug: see the path Vercel sends (remove after fixing 404)
+  app.get("/debug-path", (req, res) => {
+    res.json({
+      url: req.url,
+      path: req.path,
+      originalUrl: req.originalUrl,
+      vercel: process.env.VERCEL === "1"
+    });
+  });
+
   // Friendly root page
   app.get("/", (_req, res) => {
     res.send(`<html>
@@ -70,21 +80,24 @@ export function createApp(): Express {
     </html>`);
   });
 
-  // On Vercel, the /api prefix is stripped before the request reaches this app, so we mount at /v1.
-  // Locally (and if not behind Vercel), the full path /api/v1 is used.
-  const apiBase = process.env.VERCEL === "1" ? "/v1" : "/api/v1";
+  // API base path. Support both so we work regardless of how Vercel passes the path:
+  // - full path /api/v1 (e.g. when rewrites preserve it)
+  // - stripped /v1 (when Vercel strips /api before invoking the function)
+  const apiBases = process.env.VERCEL === "1" ? ["/api/v1", "/v1"] : ["/api/v1"];
 
-  app.use(apiBase, apiRateLimiter);
-  app.use(`${apiBase}/auth`, authRoutes);
-  app.use(`${apiBase}/products`, productsRoutes);
-  app.use(`${apiBase}/cart`, cartRoutes);
-  app.use(`${apiBase}/shipping`, shippingRoutes);
-  app.use(`${apiBase}/orders`, ordersRoutes);
-  app.use(`${apiBase}/admin`, adminRoutes);
-  app.use(`${apiBase}/users`, userRoutes);
-  app.use(`${apiBase}/notifications`, notificationsRoutes);
-  app.use(`${apiBase}/careers`, careersRoutes);
-  app.use(`${apiBase}/blog`, blogRoutes);
+  for (const apiBase of apiBases) {
+    app.use(apiBase, apiRateLimiter);
+    app.use(`${apiBase}/auth`, authRoutes);
+    app.use(`${apiBase}/products`, productsRoutes);
+    app.use(`${apiBase}/cart`, cartRoutes);
+    app.use(`${apiBase}/shipping`, shippingRoutes);
+    app.use(`${apiBase}/orders`, ordersRoutes);
+    app.use(`${apiBase}/admin`, adminRoutes);
+    app.use(`${apiBase}/users`, userRoutes);
+    app.use(`${apiBase}/notifications`, notificationsRoutes);
+    app.use(`${apiBase}/careers`, careersRoutes);
+    app.use(`${apiBase}/blog`, blogRoutes);
+  }
 
   app.use((_req, res) => {
     res.status(404).json({
