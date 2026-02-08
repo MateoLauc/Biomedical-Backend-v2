@@ -70,17 +70,21 @@ export function createApp(): Express {
     </html>`);
   });
 
-  app.use("/api/v1", apiRateLimiter);
-  app.use("/api/v1/auth", authRoutes);
-  app.use("/api/v1/products", productsRoutes);
-  app.use("/api/v1/cart", cartRoutes);
-  app.use("/api/v1/shipping", shippingRoutes);
-  app.use("/api/v1/orders", ordersRoutes);
-  app.use("/api/v1/admin", adminRoutes);
-  app.use("/api/v1/users", userRoutes);
-  app.use("/api/v1/notifications", notificationsRoutes);
-  app.use("/api/v1/careers", careersRoutes);
-  app.use("/api/v1/blog", blogRoutes);
+  // On Vercel, the /api prefix is stripped before the request reaches this app, so we mount at /v1.
+  // Locally (and if not behind Vercel), the full path /api/v1 is used.
+  const apiBase = process.env.VERCEL === "1" ? "/v1" : "/api/v1";
+
+  app.use(apiBase, apiRateLimiter);
+  app.use(`${apiBase}/auth`, authRoutes);
+  app.use(`${apiBase}/products`, productsRoutes);
+  app.use(`${apiBase}/cart`, cartRoutes);
+  app.use(`${apiBase}/shipping`, shippingRoutes);
+  app.use(`${apiBase}/orders`, ordersRoutes);
+  app.use(`${apiBase}/admin`, adminRoutes);
+  app.use(`${apiBase}/users`, userRoutes);
+  app.use(`${apiBase}/notifications`, notificationsRoutes);
+  app.use(`${apiBase}/careers`, careersRoutes);
+  app.use(`${apiBase}/blog`, blogRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({
