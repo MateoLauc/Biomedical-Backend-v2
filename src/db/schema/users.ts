@@ -16,7 +16,7 @@ export const users = pgTable(
     emailLower: text("email_lower").notNull(),
 
     phoneNumber: text("phone_number").notNull(),
-    countryOfPractice: text("country_of_practice").notNull(),
+    stateOfPractice: text("state_of_practice").notNull(),
 
     passwordHash: text("password_hash").notNull(),
 

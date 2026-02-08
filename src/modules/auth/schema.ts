@@ -10,7 +10,7 @@ export const signupSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters long.")
     .max(100, "Password must be no more than 100 characters long."),
-  countryOfPractice: z.string().min(1).max(100)
+  stateOfPractice: z.string().min(1).max(100)
 });
 
 export const signinSchema = z.object({

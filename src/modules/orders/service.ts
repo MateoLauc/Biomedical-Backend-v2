@@ -131,54 +131,48 @@ export const ordersService = {
     const amountInKobo = Math.round(total * 100); // Convert to kobo (smallest currency unit)
     const paymentReference = order.orderNumber; // Use order number as payment reference
 
-    try {
-      const paymentInitData: {
-        email: string;
-        amount: number;
-        reference: string;
-        callback_url?: string;
-        metadata: {
-          orderId: string;
-          userId: string;
-          orderNumber: string;
-        };
-      } = {
-        email: userRecord.email,
-        amount: amountInKobo,
-        reference: paymentReference,
-        metadata: {
-          orderId: order.id,
-          userId: userId,
-          orderNumber: order.orderNumber
-        }
+    const paymentInitData: {
+      email: string;
+      amount: number;
+      reference: string;
+      callback_url?: string;
+      metadata: {
+        orderId: string;
+        userId: string;
+        orderNumber: string;
       };
-      if (input.callbackUrl) {
-        paymentInitData.callback_url = input.callbackUrl;
+    } = {
+      email: userRecord.email,
+      amount: amountInKobo,
+      reference: paymentReference,
+      metadata: {
+        orderId: order.id,
+        userId: userId,
+        orderNumber: order.orderNumber
       }
-      const paymentInit = await initializePayment(paymentInitData);
+    };
+    if (input.callbackUrl) {
+      paymentInitData.callback_url = input.callbackUrl;
+    }
+    const paymentInit = await initializePayment(paymentInitData);
 
-      // Store payment reference
-      await ordersRepo.setPaymentReference(order.id, paymentReference);
+    // Store payment reference
+    await ordersRepo.setPaymentReference(order.id, paymentReference);
 
     // Clear cart after successful order creation
     await cartRepo.clearCart(userId);
 
-      // Get full order with items
-      const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userId);
-      if (!orderWithItems) {
-        throw new Error("Failed to retrieve created order");
-      }
-
-      return {
-        order: orderWithItems,
-        paymentReference: paymentInit.data.reference,
-        authorizationUrl: paymentInit.data.authorization_url
-      };
-    } catch (error) {
-      // If payment initialization fails, we should still return the order
-      // but mark it appropriately - for now, just rethrow
-      throw error;
+    // Get full order with items
+    const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userId);
+    if (!orderWithItems) {
+      throw new Error("Failed to retrieve created order");
     }
+
+    return {
+      order: orderWithItems,
+      paymentReference: paymentInit.data.reference,
+      authorizationUrl: paymentInit.data.authorization_url
+    };
   },
 
   async getOrder(id: string, userId: string, userRole: string): Promise<OrderWithItems> {
@@ -295,7 +289,7 @@ export const ordersService = {
       throw badRequest(`Cannot change order status from ${order.status} to ${input.status}. Valid transitions: ${allowedNextStatuses.join(", ") || "none"}`);
     }
 
-    const updated = await ordersRepo.updateOrderStatus(id, input.status, input.notes);
+     await ordersRepo.updateOrderStatus(id, input.status, input.notes);
     const orderWithItems = await ordersRepo.getOrderWithItems(id);
     if (!orderWithItems) {
       throw new Error("Failed to retrieve updated order");
@@ -325,7 +319,7 @@ export const ordersService = {
       throw badRequest("Delivered orders cannot be cancelled.");
     }
 
-    const cancelled = await ordersRepo.cancelOrder(id, input.reason);
+     await ordersRepo.cancelOrder(id, input.reason);
     const orderWithItems = await ordersRepo.getOrderWithItems(id);
     if (!orderWithItems) {
       throw new Error("Failed to retrieve cancelled order");

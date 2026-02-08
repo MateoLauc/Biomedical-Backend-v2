@@ -16,7 +16,7 @@ function formatFieldName(fieldName: string): string {
     currentPassword: "Current password",
     newPassword: "New password",
     phoneNumber: "Phone number",
-    countryOfPractice: "Country of practice",
+    stateOfPractice: "State of practice",
     whoYouAre: "Profession",
     token: "Token"
   };

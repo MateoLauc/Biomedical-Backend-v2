@@ -15,7 +15,7 @@ function toProfileUser(user: User): ProfileUser {
     businessLicenseStatus: user.businessLicenseStatus,
     prescriptionAuthorityStatus: user.prescriptionAuthorityStatus,
     whoYouAre: user.whoYouAre,
-    countryOfPractice: user.countryOfPractice,
+    stateOfPractice: user.stateOfPractice,
     phoneNumber: user.phoneNumber
   };
 }
@@ -39,7 +39,7 @@ export const userService = {
     if (input.firstName !== undefined) data.firstName = input.firstName.trim();
     if (input.lastName !== undefined) data.lastName = input.lastName.trim();
     if (input.whoYouAre !== undefined) data.whoYouAre = input.whoYouAre.trim();
-    if (input.countryOfPractice !== undefined) data.countryOfPractice = input.countryOfPractice.trim();
+    if (input.stateOfPractice !== undefined) data.stateOfPractice = input.stateOfPractice.trim();
 
     if (input.phoneNumber !== undefined) {
       const phoneNumber = input.phoneNumber.trim();

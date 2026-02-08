@@ -22,6 +22,7 @@ import {
   newDeviceText
 } from "./templates/new-device";
 import { getLogoAttachment } from "./logo";
+import { getBrandConfig } from "./config";
 
 function baseUrl(): string {
   const first = env.CORS_ORIGINS.split(",")[0]?.trim();
@@ -34,7 +35,7 @@ function emailAttachments(): Array<{ filename: string; content_id: string; dispo
 }
 
 export async function sendVerificationEmail(email: string, token: string): Promise<void> {
-  const verificationUrl = `${baseUrl()}/verify-email?token=${token}`;
+  const verificationUrl = `${baseUrl()}/auth/verify-email?token=${token}`;
 
   if (!isEmailConfigured()) {
     logger.info({ email, verificationUrl }, "Email verification (not sent - email not configured)");
@@ -61,7 +62,7 @@ export async function sendVerificationEmail(email: string, token: string): Promi
 }
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
-  const resetUrl = `${baseUrl()}/reset-password?token=${token}`;
+  const resetUrl = `${baseUrl()}/auth/reset-password?token=${token}`;
 
   if (!isEmailConfigured()) {
     logger.info({ email, resetUrl }, "Password reset email (not sent - email not configured)");
@@ -114,6 +115,49 @@ export async function sendWelcomeEmail(email: string, firstName: string): Promis
   }
 }
 
+export async function sendAdminWelcomeEmail(email: string, firstName: string, tempPassword: string): Promise<void> {
+  const appUrl = baseUrl();
+
+  if (!isEmailConfigured()) {
+    logger.info({ email, appUrl }, "Admin welcome email (not sent - email not configured)");
+    return;
+  }
+
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  // Build a simple admin welcome message that includes the temporary password and instructions
+  const html = `
+    ${welcomeHtml({ firstName, appUrl })}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
+      <tr>
+        <td style="font-size:16px; color:${getBrandConfig().textColor};">
+          <p style="margin:0 0 12px;">An administrator account has been created for you.</p>
+          <p style="margin:0 0 12px;">Temporary password: <strong>${tempPassword}</strong></p>
+          <p style="margin:0 0 12px;">Please sign in and change your password in Settings as soon as you log in.</p>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  const text = `${welcomeText({ firstName, appUrl })}\n\nAn administrator account has been created for you.\nTemporary password: ${tempPassword}\n\nPlease sign in and change your password in Settings as soon as you log in.`;
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: welcomeSubject(),
+      html,
+      text,
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Admin welcome email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send admin welcome email");
+    throw err;
+  }
+}
+
 export type NewDeviceEmailParams = {
   email: string;
   deviceDescription: string;
@@ -123,7 +167,7 @@ export type NewDeviceEmailParams = {
 export async function sendNewDeviceEmail(params: NewDeviceEmailParams): Promise<void> {
   const { email, deviceDescription, timestamp } = params;
   const appUrl = baseUrl();
-  const resetPasswordUrl = `${appUrl}/forgot-password`;
+  const resetPasswordUrl = `${appUrl}/auth/forgot-password`;
 
   if (!isEmailConfigured()) {
     logger.info({ email, deviceDescription }, "New device email (not sent - email not configured)");

@@ -5,6 +5,6 @@ export const updateProfileSchema = z.object({
   lastName: z.string().min(1).max(100).optional(),
   whoYouAre: z.string().min(1).max(200).optional(),
   phoneNumber: z.string().min(1).max(20).optional(),
-  countryOfPractice: z.string().min(1).max(100).optional(),
+  stateOfPractice: z.string().min(1).max(100).optional(),
   email: z.string().email().max(255).optional()
 });

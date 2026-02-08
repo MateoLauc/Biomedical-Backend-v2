@@ -12,7 +12,7 @@ export interface SignupInput {
   email: string;
   phoneNumber: string;
   password: string;
-  countryOfPractice: string;
+  stateOfPractice: string;
 }
 
 export interface SigninInput {

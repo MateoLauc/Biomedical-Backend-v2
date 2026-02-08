@@ -1,8 +1,11 @@
 import { authRepo } from "../auth/repo";
 import { productsRepo } from "../products/repo";
 import { ordersRepo } from "../orders/repo";
-import { forbidden, notFound } from "../../lib/http-errors";
+import { badRequest, forbidden, notFound } from "../../lib/http-errors";
 import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery, UpdateUserVerificationInput } from "./types";
+import { hashPassword } from "../../lib/auth/password";
+import { sendAdminWelcomeEmail } from "../../lib/email";
+import { auditRepo } from "../audit/repo";
 
 export const adminService = {
   async listUsers(query: ListUsersQuery, userRole: string): Promise<{
@@ -137,10 +140,66 @@ export const adminService = {
       businessLicenseStatus: updated.businessLicenseStatus,
       prescriptionAuthorityStatus: updated.prescriptionAuthorityStatus,
       whoYouAre: updated.whoYouAre,
-      countryOfPractice: updated.countryOfPractice,
+      stateOfPractice: updated.stateOfPractice,
       phoneNumber: updated.phoneNumber,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt
+    };
+  },
+  async createAdmin(userRole: string, data: { firstName: string; lastName: string; email: string; password: string; role: string; phoneNumber?: string; stateOfPractice?: string }, actorUserId?: string, ip?: string, userAgent?: string) {
+    if (userRole !== "super_admin") {
+      throw forbidden("Only super administrators can create admin accounts.");
+    }
+
+    const emailLower = data.email.toLowerCase().trim();
+    const existing = await authRepo.findUserByEmail(emailLower);
+    if (existing) {
+      throw badRequest("This email address is already registered. Please use a different email.");
+    }
+
+    const passwordHash = await hashPassword(data.password);
+
+    const user = await authRepo.createUser({
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      whoYouAre: "Admin",
+      email: data.email.trim(),
+      emailLower,
+      phoneNumber: data.phoneNumber ?? "",
+      stateOfPractice: data.stateOfPractice ?? "",
+      passwordHash,
+      role: data.role === "super_admin" ? "super_admin" : "admin"
+    });
+
+    // send welcome email with temporary password info
+    try {
+      await sendAdminWelcomeEmail(user.email, user.firstName, data.password);
+    } catch (err) {
+      // log but don't fail creation
+      console.error("Failed to send admin welcome email", err);
+    }
+
+    // audit log
+    try {
+      await auditRepo.createLog({
+        actorUserId: actorUserId ?? null,
+        action: "create_admin",
+        entityType: "user",
+        entityId: user.id,
+        ip: ip ?? null,
+        userAgent: userAgent ?? null,
+        metadata: { email: user.email, role: user.role }
+      });
+    } catch (err) {
+      console.error("Failed to write audit log for createAdmin", err);
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName
     };
   }
 };
