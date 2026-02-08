@@ -20,7 +20,7 @@ export type AdminUserListItem = {
   businessLicenseStatus: "not_submitted" | "pending" | "approved" | "rejected";
   prescriptionAuthorityStatus: "not_submitted" | "pending" | "approved" | "rejected";
   whoYouAre: string;
-  countryOfPractice: string;
+  stateOfPractice: string;
   phoneNumber: string;
   createdAt: Date;
   updatedAt: Date;
@@ -34,12 +34,15 @@ export const authRepo = {
     email: string;
     emailLower: string;
     phoneNumber: string;
-    countryOfPractice: string;
+    stateOfPractice: string;
     passwordHash: string;
+    role?: "super_admin" | "admin" | "customer";
   }): Promise<User> {
+    const insertData: typeof users.$inferInsert = { ...data };
+    if (data.role) insertData.role = data.role;
     const [user] = await db
       .insert(users)
-      .values(data)
+      .values(insertData)
       .returning();
 
     return user as User;
@@ -88,20 +91,20 @@ export const authRepo = {
       lastName: string;
       whoYouAre: string;
       phoneNumber: string;
-      countryOfPractice: string;
+      stateOfPractice: string;
       email: string;
       emailLower: string;
       emailVerifiedAt: Date | null;
     }>
   ): Promise<User> {
-    const set: { updatedAt: Date; firstName?: string; lastName?: string; whoYouAre?: string; phoneNumber?: string; countryOfPractice?: string; email?: string; emailLower?: string; emailVerifiedAt?: Date | null } = {
+    const set: { updatedAt: Date; firstName?: string; lastName?: string; whoYouAre?: string; phoneNumber?: string; stateOfPractice?: string; email?: string; emailLower?: string; emailVerifiedAt?: Date | null } = {
       updatedAt: new Date()
     };
     if (data.firstName !== undefined) set.firstName = data.firstName;
     if (data.lastName !== undefined) set.lastName = data.lastName;
     if (data.whoYouAre !== undefined) set.whoYouAre = data.whoYouAre;
     if (data.phoneNumber !== undefined) set.phoneNumber = data.phoneNumber;
-    if (data.countryOfPractice !== undefined) set.countryOfPractice = data.countryOfPractice;
+    if (data.stateOfPractice !== undefined) set.stateOfPractice = data.stateOfPractice;
     if (data.email !== undefined) set.email = data.email;
     if (data.emailLower !== undefined) set.emailLower = data.emailLower;
     if (data.emailVerifiedAt !== undefined) set.emailVerifiedAt = data.emailVerifiedAt;
@@ -279,7 +282,7 @@ export const authRepo = {
         businessLicenseStatus: users.businessLicenseStatus,
         prescriptionAuthorityStatus: users.prescriptionAuthorityStatus,
         whoYouAre: users.whoYouAre,
-        countryOfPractice: users.countryOfPractice,
+        stateOfPractice: users.stateOfPractice,
         phoneNumber: users.phoneNumber,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt

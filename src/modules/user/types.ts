@@ -1,9 +1,9 @@
 import type { PublicUser } from "../auth/types";
 
-/** Current user profile (includes whoYouAre, countryOfPractice, phoneNumber for profile page). */
+/** Current user profile (includes whoYouAre, stateOfPractice, phoneNumber for profile page). */
 export interface ProfileUser extends PublicUser {
   whoYouAre: string;
-  countryOfPractice: string;
+  stateOfPractice: string;
   phoneNumber: string;
 }
 
@@ -12,6 +12,6 @@ export interface UpdateProfileInput {
   lastName?: string;
   whoYouAre?: string;
   phoneNumber?: string;
-  countryOfPractice?: string;
+  stateOfPractice?: string;
   email?: string;
 }

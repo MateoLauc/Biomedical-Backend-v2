@@ -72,4 +72,18 @@ export const adminController = {
     const user = await adminService.updateUserVerification(userRole, id, req.body as UpdateUserVerificationInput);
     res.json({ message: "User verification status updated successfully.", user });
   }
+  ,
+  async createAdmin(req: Request, res: Response) {
+    const userRole = req.user?.role;
+    if (!userRole) {
+      return res.status(401).json({ error: "Please sign in to access this resource." });
+    }
+
+    const data = req.body as { firstName: string; lastName: string; email: string; password: string; role: string; phoneNumber: string; stateOfPractice: string };
+    const actorUserId = req.user?.userId;
+    const ip = req.ip;
+    const userAgent = req.get("user-agent") || undefined;
+    const admin = await adminService.createAdmin(userRole, data, actorUserId, ip, userAgent);
+    res.status(201).json({ message: "Admin user created.", admin });
+  }
 };

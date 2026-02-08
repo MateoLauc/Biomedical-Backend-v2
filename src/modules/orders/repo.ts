@@ -1,6 +1,6 @@
 import { eq, and, desc, sql } from "drizzle-orm";
 import { db } from "../../db";
-import { orders, orderItems, productVariants, products } from "../../db/schema";
+import { orders, orderItems } from "../../db/schema";
 import type { Order, OrderItem, OrderWithItems, OrderStatus, PaymentStatus } from "./types";
 
 export const ordersRepo = {

@@ -53,7 +53,7 @@ export const authController = {
   },
 
   async changePassword(req: Request, res: Response) {
-    const userId = (req as Request & { user?: { userId: string } }).user?.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       throw badRequest("Please sign in to continue.");
     }

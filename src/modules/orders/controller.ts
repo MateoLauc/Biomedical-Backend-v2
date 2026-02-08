@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { ordersService } from "./service";
 import { authRepo } from "../auth/repo";
-import { authService } from "../auth/service";
 import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput } from "./types";
 
 export const ordersController = {

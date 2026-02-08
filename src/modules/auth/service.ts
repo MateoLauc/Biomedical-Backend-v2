@@ -51,7 +51,7 @@ export const authService = {
       email: input.email.trim(),
       emailLower,
       phoneNumber,
-      countryOfPractice: input.countryOfPractice.trim(),
+      stateOfPractice: input.stateOfPractice.trim(),
       passwordHash
     });
 
