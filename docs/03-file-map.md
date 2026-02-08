@@ -5,7 +5,7 @@
 - `src/server.ts` — local/dev server (listens on `PORT`)
 - `src/app.ts` — Express app factory (`createApp()`)
 - `api/index.ts` — Vercel serverless entrypoint (exports the Express app)
-- `vercel.json` — rewrites routes to `/api`
+- `vercel.json` — build and output config. On Vercel, the `/api` prefix is stripped before the request reaches the app, so `app.ts` mounts routes at `/v1` when `VERCEL=1` (see `apiBase` in `app.ts`).
 
 ## Configuration
 
