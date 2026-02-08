@@ -100,4 +100,6 @@ export function createApp(): Express {
   return app;
 }
 
+// Default export for Vercel serverless: entry must be a function or server
 export default createApp();
+
