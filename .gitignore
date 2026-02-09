@@ -1,6 +1,8 @@
 node_modules
 npm-cache
 dist
+api/*.js
+api/chunk-*.js
 .env
 
 .cursorrules
