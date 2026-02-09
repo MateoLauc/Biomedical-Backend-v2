@@ -1,4 +1,4 @@
-import type { PublicUser } from "../auth/types";
+import type { PublicUser } from "../auth/types.js";
 
 /** Current user profile (includes whoYouAre, stateOfPractice, phoneNumber for profile page). */
 export interface ProfileUser extends PublicUser {

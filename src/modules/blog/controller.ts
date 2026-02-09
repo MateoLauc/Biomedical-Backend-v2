@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { blogService } from "./service";
-import { uploadImage, isCloudinaryConfigured } from "../../lib/cloudinary";
-import type { CreateBlogPostInput, UpdateBlogPostInput, ListBlogPostsQuery } from "./types";
+import { blogService } from "./service.js";
+import { uploadImage, isCloudinaryConfigured } from "../../lib/cloudinary.js";
+import type { CreateBlogPostInput, UpdateBlogPostInput, ListBlogPostsQuery } from "./types.js";
 
 export const blogController = {
   async list(req: Request, res: Response) {

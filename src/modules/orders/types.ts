@@ -1,4 +1,4 @@
-import type { orders } from "../../db/schema";
+import type { orders } from "../../db/schema/index.js";
 
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = {

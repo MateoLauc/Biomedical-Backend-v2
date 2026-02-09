@@ -1,6 +1,6 @@
-import { careersRepo } from "./repo";
-import { notFound, forbidden } from "../../lib/http-errors";
-import type { Job, CreateJobInput, UpdateJobInput, ListJobsQuery, JobStatus } from "./types";
+import { careersRepo } from "./repo.js";
+import { notFound, forbidden } from "../../lib/http-errors.js";
+import type { Job, CreateJobInput, UpdateJobInput, ListJobsQuery, JobStatus } from "./types.js";
 
 export const careersService = {
   async list(query: ListJobsQuery): Promise<{

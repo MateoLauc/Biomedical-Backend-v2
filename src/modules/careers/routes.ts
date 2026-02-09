@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { careersController } from "./controller";
-import { requireAuth, requireRole } from "../../middleware/auth";
-import { validateBody, validateQuery } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { createJobSchema, updateJobSchema, listJobsQuerySchema } from "./schema";
+import { careersController } from "./controller.js";
+import { requireAuth, requireRole } from "../../middleware/auth.js";
+import { validateBody, validateQuery } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { createJobSchema, updateJobSchema, listJobsQuerySchema } from "./schema.js";
 
 export const careersRoutes = Router();
 

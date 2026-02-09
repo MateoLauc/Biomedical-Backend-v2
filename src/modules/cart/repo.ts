@@ -1,7 +1,7 @@
 import { eq, and, desc } from "drizzle-orm";
-import { db } from "../../db";
-import { cartItems, productVariants, products } from "../../db/schema";
-import type { CartItem, CartItemInput, CartItemUpdate, CartItemWithDetails } from "./types";
+import { db } from "../../db/index.js";
+import { cartItems, productVariants, products } from "../../db/schema/index.js";
+import type { CartItem, CartItemInput, CartItemUpdate, CartItemWithDetails } from "./types.js";
 
 export const cartRepo = {
   async findCartItemByUserAndVariant(userId: string, productVariantId: string): Promise<CartItem | null> {

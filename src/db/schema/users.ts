@@ -1,5 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
-import { roleEnum, verificationStatusEnum } from "./enums";
+import { roleEnum, verificationStatusEnum } from "./enums.js";
 
 export const users = pgTable(
   "users",

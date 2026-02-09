@@ -1,7 +1,7 @@
-import { authRepo } from "../auth/repo";
-import { badRequest, notFound } from "../../lib/http-errors";
-import type { ProfileUser, UpdateProfileInput } from "./types";
-import type { User } from "../auth/types";
+import { authRepo } from "../auth/repo.js";
+import { badRequest, notFound } from "../../lib/http-errors.js";
+import type { ProfileUser, UpdateProfileInput } from "./types.js";
+import type { User } from "../auth/types.js";
 
 function toProfileUser(user: User): ProfileUser {
   return {

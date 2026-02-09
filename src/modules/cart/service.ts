@@ -1,9 +1,9 @@
-import { cartRepo } from "./repo";
-import { productVariants } from "../../db/schema";
-import { db } from "../../db";
+import { cartRepo } from "./repo.js";
+import { productVariants } from "../../db/schema/index.js";
+import { db } from "../../db/index.js";
 import { eq, and } from "drizzle-orm";
-import { badRequest, notFound } from "../../lib/http-errors";
-import type { CartItemInput, CartItemUpdate, CartItemWithDetails } from "./types";
+import { badRequest, notFound } from "../../lib/http-errors.js";
+import type { CartItemInput, CartItemUpdate, CartItemWithDetails } from "./types.js";
 
 export const cartService = {
   async getCart(userId: string): Promise<{ items: CartItemWithDetails[]; totalItems: number }> {

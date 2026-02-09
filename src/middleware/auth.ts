@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../lib/auth/jwt";
-import { unauthorized, forbidden } from "../lib/http-errors";
+import { verifyAccessToken } from "../lib/auth/jwt.js";
+import { unauthorized, forbidden } from "../lib/http-errors.js";
 
 declare module "express-serve-static-core" {
   interface Request {

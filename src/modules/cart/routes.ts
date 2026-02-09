@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { cartController } from "./controller";
-import { requireAuth } from "../../middleware/auth";
-import { validateBody } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { addToCartSchema, updateCartItemSchema } from "./schema";
+import { cartController } from "./controller.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { validateBody } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { addToCartSchema, updateCartItemSchema } from "./schema.js";
 
 export const cartRoutes = Router();
 

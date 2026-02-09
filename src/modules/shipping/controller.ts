@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { shippingService } from "./service";
-import type { ShippingAddressInput, ShippingAddressUpdate } from "./types";
+import { shippingService } from "./service.js";
+import type { ShippingAddressInput, ShippingAddressUpdate } from "./types.js";
 
 export const shippingController = {
   async listShippingAddresses(req: Request, res: Response) {

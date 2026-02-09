@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { notificationsController } from "./controller";
-import { requireAuth } from "../../middleware/auth";
-import { validateQuery } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { listNotificationsQuerySchema } from "./schema";
+import { notificationsController } from "./controller.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { validateQuery } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { listNotificationsQuerySchema } from "./schema.js";
 
 export const notificationsRoutes = Router();
 

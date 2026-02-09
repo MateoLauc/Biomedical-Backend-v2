@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { badRequest } from "../lib/http-errors";
+import { badRequest } from "../lib/http-errors.js";
 
 /**
  * Converts camelCase field names to user-friendly labels

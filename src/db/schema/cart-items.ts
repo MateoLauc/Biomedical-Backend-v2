@@ -1,7 +1,7 @@
 import { pgTable, timestamp, uuid, integer } from "drizzle-orm/pg-core";
 import { index, uniqueIndex } from "drizzle-orm/pg-core";
-import { users } from "./users";
-import { productVariants } from "./product-variants";
+import { users } from "./users.js";
+import { productVariants } from "./product-variants.js";
 
 export const cartItems = pgTable(
   "cart_items",

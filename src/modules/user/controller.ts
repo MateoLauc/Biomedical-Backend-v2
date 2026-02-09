@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { userService } from "./service";
-import type { UpdateProfileInput } from "./types";
+import { userService } from "./service.js";
+import type { UpdateProfileInput } from "./types.js";
 
 export const userController = {
   async getMe(req: Request, res: Response) {

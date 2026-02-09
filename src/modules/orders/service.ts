@@ -1,12 +1,12 @@
-import { ordersRepo } from "./repo";
-import { cartRepo } from "../cart/repo";
-import { shippingRepo } from "../shipping/repo";
-import { authRepo } from "../auth/repo";
-import { canPurchaseProduct } from "../../lib/policies/purchase-policy";
-import { initializePayment, verifyPayment } from "../../lib/payments/paystack";
-import { badRequest, notFound, forbidden, unauthorized } from "../../lib/http-errors";
-import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput, OrderWithItems } from "./types";
-import type { PublicUser } from "../auth/types";
+import { ordersRepo } from "./repo.js";
+import { cartRepo } from "../cart/repo.js";
+import { shippingRepo } from "../shipping/repo.js";
+import { authRepo } from "../auth/repo.js";
+import { canPurchaseProduct } from "../../lib/policies/purchase-policy.js";
+import { initializePayment, verifyPayment } from "../../lib/payments/paystack.js";
+import { badRequest, notFound, forbidden, unauthorized } from "../../lib/http-errors.js";
+import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput, OrderWithItems } from "./types.js";
+import type { PublicUser } from "../auth/types.js";
 
 function generateOrderNumber(): string {
   const date = new Date();
@@ -369,7 +369,7 @@ export const ordersService = {
 
   async handleWebhook(payload: string, signature: string): Promise<void> {
     // Verify webhook signature
-    const { verifyPaystackWebhook } = await import("../../lib/payments/paystack");
+    const { verifyPaystackWebhook } = await import("../../lib/payments/paystack.js");
     const isValid = verifyPaystackWebhook(payload, signature);
     if (!isValid) {
       throw unauthorized("Invalid webhook signature.");

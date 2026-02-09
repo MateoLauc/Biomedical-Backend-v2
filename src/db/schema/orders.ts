@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid, decimal, index } from "drizzle-orm/pg-core";
-import { users } from "./users";
-import { shippingAddresses } from "./shipping-addresses";
-import { orderStatusEnum, paymentStatusEnum } from "./enums";
+import { users } from "./users.js";
+import { shippingAddresses } from "./shipping-addresses.js";
+import { orderStatusEnum, paymentStatusEnum } from "./enums.js";
 
 export const orders = pgTable(
   "orders",

@@ -1,6 +1,6 @@
-import { notificationsRepo } from "./repo";
-import { notFound } from "../../lib/http-errors";
-import type { Notification, ListNotificationsQuery } from "./types";
+import { notificationsRepo } from "./repo.js";
+import { notFound } from "../../lib/http-errors.js";
+import type { Notification, ListNotificationsQuery } from "./types.js";
 
 export const notificationsService = {
   async list(userId: string, query: ListNotificationsQuery): Promise<{

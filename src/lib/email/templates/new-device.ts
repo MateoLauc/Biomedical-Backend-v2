@@ -1,5 +1,5 @@
-import { emailLayout, escapeHtml } from "../layout";
-import { getBrandConfig } from "../config";
+import { emailLayout, escapeHtml } from "../layout.js";
+import { getBrandConfig } from "../config.js";
 
 export type NewDeviceTemplateData = {
   deviceDescription: string;

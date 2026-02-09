@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid, boolean, integer } from "drizzle-orm/pg-core";
 import { index } from "drizzle-orm/pg-core";
-import { categories } from "./categories";
+import { categories } from "./categories.js";
 
 export const products = pgTable(
   "products",

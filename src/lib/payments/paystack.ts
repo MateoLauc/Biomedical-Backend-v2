@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
-import { env } from "../../config/env";
-import { badRequest } from "../http-errors";
+import { env } from "../../config/env.js";
+import { badRequest } from "../http-errors.js";
 
 export interface PaystackInitializeRequest {
   email: string;

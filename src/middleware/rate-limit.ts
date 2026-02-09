@@ -1,6 +1,6 @@
 import { rateLimit } from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
-import { env, isTest } from "../config/env";
+import { env, isTest } from "../config/env.js";
 
 const windowMs = env.RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000; // 15 minutes
 const max = env.RATE_LIMIT_MAX ?? 100; // requests per window per IP

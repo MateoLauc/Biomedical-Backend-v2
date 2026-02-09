@@ -1,5 +1,5 @@
-import { blogRepo } from "./repo";
-import { notFound, forbidden } from "../../lib/http-errors";
+import { blogRepo } from "./repo.js";
+import { notFound, forbidden } from "../../lib/http-errors.js";
 import type {
   BlogPost,
   CreateBlogPostInput,
@@ -7,7 +7,7 @@ import type {
   ListBlogPostsQuery,
   BlogPostStatus,
   BlogPostType
-} from "./types";
+} from "./types.js";
 
 /** Generate URL-safe slug from title (lowercase, hyphens, no special chars). */
 function slugify(title: string): string {

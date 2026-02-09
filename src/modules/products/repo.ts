@@ -1,7 +1,7 @@
 import { eq, and, desc, sql, asc, gt, lte } from "drizzle-orm";
-import { db } from "../../db";
-import { categories, products, productVariants } from "../../db/schema";
-import type { Category, Product, ProductVariant, CategoryInput, ProductInput, ProductVariantInput } from "./types";
+import { db } from "../../db/index.js";
+import { categories, products, productVariants } from "../../db/schema/index.js";
+import type { Category, Product, ProductVariant, CategoryInput, ProductInput, ProductVariantInput } from "./types.js";
 
 export const productsRepo = {
   // Categories

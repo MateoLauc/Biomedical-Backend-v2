@@ -1,6 +1,6 @@
-import { productsRepo } from "./repo";
-import { badRequest, notFound } from "../../lib/http-errors";
-import type { Category, CategoryInput, ProductInput, ProductVariantInput, ProductWithVariants } from "./types";
+import { productsRepo } from "./repo.js";
+import { badRequest, notFound } from "../../lib/http-errors.js";
+import type { Category, CategoryInput, ProductInput, ProductVariantInput, ProductWithVariants } from "./types.js";
 
 function slugify(text: string): string {
   return text

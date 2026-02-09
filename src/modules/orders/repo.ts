@@ -1,7 +1,7 @@
 import { eq, and, desc, sql } from "drizzle-orm";
-import { db } from "../../db";
-import { orders, orderItems } from "../../db/schema";
-import type { Order, OrderItem, OrderWithItems, OrderStatus, PaymentStatus } from "./types";
+import { db } from "../../db/index.js";
+import { orders, orderItems } from "../../db/schema/index.js";
+import type { Order, OrderItem, OrderWithItems, OrderStatus, PaymentStatus } from "./types.js";
 
 export const ordersRepo = {
   async findOrderById(id: string, userId?: string): Promise<Order | null> {

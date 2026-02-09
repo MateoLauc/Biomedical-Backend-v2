@@ -1,11 +1,11 @@
-import { authRepo } from "../auth/repo";
-import { productsRepo } from "../products/repo";
-import { ordersRepo } from "../orders/repo";
-import { badRequest, forbidden, notFound } from "../../lib/http-errors";
-import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery, UpdateUserVerificationInput } from "./types";
-import { hashPassword } from "../../lib/auth/password";
-import { sendAdminWelcomeEmail } from "../../lib/email";
-import { auditRepo } from "../audit/repo";
+import { authRepo } from "../auth/repo.js";
+import { productsRepo } from "../products/repo.js";
+import { ordersRepo } from "../orders/repo.js";
+import { badRequest, forbidden, notFound } from "../../lib/http-errors.js";
+import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery, UpdateUserVerificationInput } from "./types.js";
+import { hashPassword } from "../../lib/auth/password.js";
+import { sendAdminWelcomeEmail } from "../../lib/email/index.js";
+import { auditRepo } from "../audit/repo.js";
 
 export const adminService = {
   async listUsers(query: ListUsersQuery, userRole: string): Promise<{

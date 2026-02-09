@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { shippingController } from "./controller";
-import { requireAuth } from "../../middleware/auth";
-import { validateBody } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { createShippingAddressSchema, updateShippingAddressSchema } from "./schema";
+import { shippingController } from "./controller.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { validateBody } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { createShippingAddressSchema, updateShippingAddressSchema } from "./schema.js";
 
 export const shippingRoutes = Router();
 

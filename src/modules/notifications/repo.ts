@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
-import { db } from "../../db";
-import { notifications } from "../../db/schema";
-import type { Notification } from "./types";
+import { db } from "../../db/index.js";
+import { notifications } from "../../db/schema/index.js";
+import type { Notification } from "./types.js";
 
 export const notificationsRepo = {
   async findById(id: string, userId: string): Promise<Notification | null> {

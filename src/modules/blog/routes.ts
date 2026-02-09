@@ -1,10 +1,10 @@
 import { Router, type Request } from "express";
 import multer, { type FileFilterCallback } from "multer";
-import { blogController } from "./controller";
-import { requireAuth, requireRole } from "../../middleware/auth";
-import { validateBody, validateQuery } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { createBlogPostSchema, updateBlogPostSchema, listBlogPostsQuerySchema } from "./schema";
+import { blogController } from "./controller.js";
+import { requireAuth, requireRole } from "../../middleware/auth.js";
+import { validateBody, validateQuery } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { createBlogPostSchema, updateBlogPostSchema, listBlogPostsQuerySchema } from "./schema.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),

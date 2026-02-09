@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
-import { env } from "../../config/env";
+import { env } from "../../config/env.js";
 
 const accessSecret = new TextEncoder().encode(env.JWT_ACCESS_SECRET);
 const refreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET);

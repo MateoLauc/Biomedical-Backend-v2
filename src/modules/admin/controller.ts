@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { adminService } from "./service";
-import type { ListUsersQuery, UpdateUserVerificationInput } from "./types";
+import { adminService } from "./service.js";
+import type { ListUsersQuery, UpdateUserVerificationInput } from "./types.js";
 
 export const adminController = {
   async listUsers(req: Request, res: Response) {

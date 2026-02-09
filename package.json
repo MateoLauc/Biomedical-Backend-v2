@@ -6,7 +6,7 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup api/index.ts --out-dir dist --format esm --platform node --target node18 --clean && cp dist/*.js api/",
+    "build": "tsc -p tsconfig.vercel.json",
     "start": "tsx src/server.ts",
     "test": "vitest run",
     "test:watch": "vitest",
