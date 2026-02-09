@@ -70,24 +70,18 @@ export function createApp(): Express {
     </html>`);
   });
 
-  // API base path. Support both so we work regardless of how Vercel passes the path:
-  // - full path /api/v1 (e.g. when rewrites preserve it)
-  // - stripped /v1 (when Vercel strips /api before invoking the function)
-  const apiBases = process.env.VERCEL === "1" ? ["/api/v1", "/v1"] : ["/api/v1"];
-
-  for (const apiBase of apiBases) {
-    app.use(apiBase, apiRateLimiter);
-    app.use(`${apiBase}/auth`, authRoutes);
-    app.use(`${apiBase}/products`, productsRoutes);
-    app.use(`${apiBase}/cart`, cartRoutes);
-    app.use(`${apiBase}/shipping`, shippingRoutes);
-    app.use(`${apiBase}/orders`, ordersRoutes);
-    app.use(`${apiBase}/admin`, adminRoutes);
-    app.use(`${apiBase}/users`, userRoutes);
-    app.use(`${apiBase}/notifications`, notificationsRoutes);
-    app.use(`${apiBase}/careers`, careersRoutes);
-    app.use(`${apiBase}/blog`, blogRoutes);
-  }
+  const apiBase = "/api/v1";
+  app.use(apiBase, apiRateLimiter);
+  app.use(`${apiBase}/auth`, authRoutes);
+  app.use(`${apiBase}/products`, productsRoutes);
+  app.use(`${apiBase}/cart`, cartRoutes);
+  app.use(`${apiBase}/shipping`, shippingRoutes);
+  app.use(`${apiBase}/orders`, ordersRoutes);
+  app.use(`${apiBase}/admin`, adminRoutes);
+  app.use(`${apiBase}/users`, userRoutes);
+  app.use(`${apiBase}/notifications`, notificationsRoutes);
+  app.use(`${apiBase}/careers`, careersRoutes);
+  app.use(`${apiBase}/blog`, blogRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({
