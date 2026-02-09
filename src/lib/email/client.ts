@@ -1,7 +1,7 @@
 import { MailtrapClient } from "mailtrap";
-import { env } from "../../config/env";
-import { parseMailFrom } from "./config";
-import { logger } from "../logger";
+import { env } from "../../config/env.js";
+import { parseMailFrom } from "./config.js";
+import { logger } from "../logger.js";
 
 let client: MailtrapClient | null = null;
 

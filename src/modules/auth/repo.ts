@@ -1,12 +1,12 @@
 import { eq, and, or, isNull, desc, sql } from "drizzle-orm";
-import { db } from "../../db";
+import { db } from "../../db/index.js";
 import {
   users,
   refreshTokens,
   emailVerificationTokens,
   passwordResetTokens,
   userDevices
-} from "../../db/schema";
+} from "../../db/schema/index.js";
 import type { User, RefreshToken, EmailVerificationToken, PasswordResetToken } from "./types.js";
 
 export type AdminUserListItem = {

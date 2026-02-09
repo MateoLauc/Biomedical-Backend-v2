@@ -1,7 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "../../db";
-import { jobs } from "../../db/schema";
-import type { Job, CreateJobInput, UpdateJobInput, JobStatus } from "./types";
+import { db } from "../../db/index.js";
+import { jobs } from "../../db/schema/index.js";
+import type { Job, CreateJobInput, UpdateJobInput, JobStatus } from "./types.js";
 
 function rowToJob(row: { id: string; title: string; type: string; department: string; icon: string | null; responsibilities: string; status: JobStatus; createdAt: Date; updatedAt: Date }): Job {
   let responsibilities: string[] = [];

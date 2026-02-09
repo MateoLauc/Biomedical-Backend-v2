@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { careersService } from "./service";
-import type { CreateJobInput, UpdateJobInput, ListJobsQuery } from "./types";
+import { careersService } from "./service.js";
+import type { CreateJobInput, UpdateJobInput, ListJobsQuery } from "./types.js";
 
 export const careersController = {
   async list(req: Request, res: Response) {

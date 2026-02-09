@@ -1,17 +1,17 @@
-import type { users } from "../../db/schema";
-import { authRepo } from "./repo";
-import { hashPassword, verifyPassword } from "../../lib/auth/password";
-import { generateToken, hashToken } from "../../lib/auth/tokens";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../lib/auth/jwt";
+import type { users } from "../../db/schema/index.js";
+import { authRepo } from "./repo.js";
+import { hashPassword, verifyPassword } from "../../lib/auth/password.js";
+import { generateToken, hashToken } from "../../lib/auth/tokens.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../lib/auth/jwt.js";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
   sendNewDeviceEmail
-} from "../../lib/email";
-import { deviceHash, deviceDescription } from "../../lib/device";
-import { badRequest, unauthorized, notFound } from "../../lib/http-errors";
-import type { SignupInput, SigninInput, AuthTokens, PublicUser } from "./types";
+} from "../../lib/email/index.js";
+import { deviceHash, deviceDescription } from "../../lib/device.js";
+import { badRequest, unauthorized, notFound } from "../../lib/http-errors.js";
+import type { SignupInput, SigninInput, AuthTokens, PublicUser } from "./types.js";
 
 function toPublicUser(user: typeof users.$inferSelect): PublicUser {
   return {

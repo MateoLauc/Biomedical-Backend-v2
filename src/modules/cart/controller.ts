@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { cartService } from "./service";
-import type { CartItemInput, CartItemUpdate } from "./types";
+import { cartService } from "./service.js";
+import type { CartItemInput, CartItemUpdate } from "./types.js";
 
 export const cartController = {
   async getCart(req: Request, res: Response) {

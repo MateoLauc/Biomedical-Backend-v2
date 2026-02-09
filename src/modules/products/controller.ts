@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { productsService } from "./service";
-import type { CategoryInput, ProductInput, ProductVariantInput } from "./types";
+import { productsService } from "./service.js";
+import type { CategoryInput, ProductInput, ProductVariantInput } from "./types.js";
 
 export const productsController = {
   // Categories

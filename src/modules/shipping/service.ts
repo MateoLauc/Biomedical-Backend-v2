@@ -1,6 +1,6 @@
-import { shippingRepo } from "./repo";
-import { notFound } from "../../lib/http-errors";
-import type { ShippingAddressInput, ShippingAddressUpdate } from "./types";
+import { shippingRepo } from "./repo.js";
+import { notFound } from "../../lib/http-errors.js";
+import type { ShippingAddressInput, ShippingAddressUpdate } from "./types.js";
 
 export const shippingService = {
   async listShippingAddresses(userId: string) {

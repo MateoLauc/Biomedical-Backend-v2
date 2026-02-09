@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
 import { index } from "drizzle-orm/pg-core";
-import { users } from "./users";
+import { users } from "./users.js";
 
 export const shippingAddresses = pgTable(
   "shipping_addresses",

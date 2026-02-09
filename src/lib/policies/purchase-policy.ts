@@ -1,4 +1,4 @@
-import type { PublicUser } from "../../modules/auth/types";
+import type { PublicUser } from "../../modules/auth/types.js";
 
 export interface ProductPurchaseRequirements {
   requiresBusinessLicense?: boolean;

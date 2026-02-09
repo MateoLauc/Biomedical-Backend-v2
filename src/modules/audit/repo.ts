@@ -1,5 +1,5 @@
-import { db } from "../../db";
-import { auditLogs } from "../../db/schema";
+import { db } from "../../db/index.js";
+import { auditLogs } from "../../db/schema/index.js";
 
 export const auditRepo = {
   async createLog(data: {

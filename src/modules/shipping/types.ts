@@ -1,4 +1,4 @@
-import type { shippingAddresses } from "../../db/schema";
+import type { shippingAddresses } from "../../db/schema/index.js";
 
 export type ShippingAddress = typeof shippingAddresses.$inferSelect;
 

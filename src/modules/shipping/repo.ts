@@ -1,7 +1,7 @@
 import { eq, desc } from "drizzle-orm";
-import { db } from "../../db";
-import { shippingAddresses } from "../../db/schema";
-import type { ShippingAddress, ShippingAddressInput, ShippingAddressUpdate } from "./types";
+import { db } from "../../db/index.js";
+import { shippingAddresses } from "../../db/schema/index.js";
+import type { ShippingAddress, ShippingAddressInput, ShippingAddressUpdate } from "./types.js";
 
 export const shippingRepo = {
   async findShippingAddressById(id: string, userId: string): Promise<ShippingAddress | null> {

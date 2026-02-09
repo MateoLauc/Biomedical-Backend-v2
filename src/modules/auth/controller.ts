@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { authService } from "./service";
-import { badRequest } from "../../lib/http-errors";
-import type { SignupInput, SigninInput } from "./types";
+import { authService } from "./service.js";
+import { badRequest } from "../../lib/http-errors.js";
+import type { SignupInput, SigninInput } from "./types.js";
 
 export const authController = {
   async signup(req: Request, res: Response) {

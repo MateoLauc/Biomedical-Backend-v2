@@ -1,4 +1,4 @@
-import type { cartItems, productVariants, products } from "../../db/schema";
+import type { cartItems, productVariants, products } from "../../db/schema/index.js";
 
 export type CartItem = typeof cartItems.$inferSelect;
 export type ProductVariant = typeof productVariants.$inferSelect;

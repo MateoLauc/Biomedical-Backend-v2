@@ -1,4 +1,4 @@
-import type { BrandConfig } from "./config";
+import type { BrandConfig } from "./config.js";
 
 /**
  * Table-based email layout for deliverability (avoids spam filters).

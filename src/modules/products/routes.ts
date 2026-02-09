@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { productsController } from "./controller";
-import { validateBody } from "../../middleware/validation";
+import { productsController } from "./controller.js";
+import { validateBody } from "../../middleware/validation.js";
 import {
   createCategorySchema,
   updateCategorySchema,
@@ -8,9 +8,9 @@ import {
   updateProductSchema,
   createProductVariantSchema,
   updateProductVariantSchema
-} from "./schema";
-import { requireAuth, requireRole } from "../../middleware/auth";
-import { asyncHandler } from "../../middleware/async-handler";
+} from "./schema.js";
+import { requireAuth, requireRole } from "../../middleware/auth.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
 
 const productsRoutes = Router();
 

@@ -1,28 +1,28 @@
-import { env } from "../../config/env";
-import { getMailtrapClient, getFromAddress, isEmailConfigured } from "./client";
-import { logger } from "../logger";
+import { env } from "../../config/env.js";
+import { getMailtrapClient, getFromAddress, isEmailConfigured } from "./client.js";
+import { logger } from "../logger.js";
 import {
   verificationSubject,
   verificationHtml,
   verificationText
-} from "./templates/verification";
+} from "./templates/verification.js";
 import {
   passwordResetSubject,
   passwordResetHtml,
   passwordResetText
-} from "./templates/password-reset";
+} from "./templates/password-reset.js";
 import {
   welcomeSubject,
   welcomeHtml,
   welcomeText
-} from "./templates/welcome";
+} from "./templates/welcome.js";
 import {
   newDeviceSubject,
   newDeviceHtml,
   newDeviceText
-} from "./templates/new-device";
-import { getLogoAttachment } from "./logo";
-import { getBrandConfig } from "./config";
+} from "./templates/new-device.js";
+import { getLogoAttachment } from "./logo.js";
+import { getBrandConfig } from "./config.js";
 
 function baseUrl(): string {
   const first = env.CORS_ORIGINS.split(",")[0]?.trim();

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { userController } from "./controller";
-import { requireAuth } from "../../middleware/auth";
-import { validateBody } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { updateProfileSchema } from "./schema";
+import { userController } from "./controller.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { validateBody } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { updateProfileSchema } from "./schema.js";
 
 export const userRoutes = Router();
 

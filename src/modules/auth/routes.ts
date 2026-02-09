@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { authController } from "./controller";
-import { validateBody } from "../../middleware/validation";
-import { requireAuth } from "../../middleware/auth";
-import { asyncHandler } from "../../middleware/async-handler";
+import { authController } from "./controller.js";
+import { validateBody } from "../../middleware/validation.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
 import {
   signupSchema,
   signinSchema,
@@ -11,7 +11,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema
-} from "./schema";
+} from "./schema.js";
 
 export const authRoutes = Router();
 

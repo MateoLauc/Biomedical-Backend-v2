@@ -1,4 +1,4 @@
-import type { users, refreshTokens, emailVerificationTokens, passwordResetTokens } from "../../db/schema";
+import type { users, refreshTokens, emailVerificationTokens, passwordResetTokens } from "../../db/schema/index.js";
 
 export type User = typeof users.$inferSelect;
 export type RefreshToken = typeof refreshTokens.$inferSelect;

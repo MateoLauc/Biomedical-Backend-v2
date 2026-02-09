@@ -1,4 +1,4 @@
-import type { categories, products, productVariants } from "../../db/schema";
+import type { categories, products, productVariants } from "../../db/schema/index.js";
 
 export type Category = typeof categories.$inferSelect;
 export type CategoryWithSubCategories = Category & { subCategories: Category[] };

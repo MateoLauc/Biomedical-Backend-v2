@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { notificationsService } from "./service";
-import type { ListNotificationsQuery } from "./types";
+import { notificationsService } from "./service.js";
+import type { ListNotificationsQuery } from "./types.js";
 
 export const notificationsController = {
   async list(req: Request, res: Response) {

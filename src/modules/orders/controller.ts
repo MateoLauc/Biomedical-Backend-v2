@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { ordersService } from "./service";
-import { authRepo } from "../auth/repo";
-import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput } from "./types";
+import { ordersService } from "./service.js";
+import { authRepo } from "../auth/repo.js";
+import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput } from "./types.js";
 
 export const ordersController = {
   async createOrder(req: Request, res: Response) {

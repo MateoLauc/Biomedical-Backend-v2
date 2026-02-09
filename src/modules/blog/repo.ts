@@ -1,7 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "../../db";
-import { blogPosts } from "../../db/schema";
-import type { BlogPost, CreateBlogPostInput, UpdateBlogPostInput, BlogPostStatus, BlogPostType } from "./types";
+import { db } from "../../db/index.js";
+import { blogPosts } from "../../db/schema/index.js";
+import type { BlogPost, CreateBlogPostInput, UpdateBlogPostInput, BlogPostStatus, BlogPostType } from "./types.js";
 
 function rowToBlogPost(row: {
   id: string;

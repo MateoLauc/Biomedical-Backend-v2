@@ -59,16 +59,6 @@ export function createApp(): Express {
     });
   });
 
-  // Debug: see the path Vercel sends (remove after fixing 404)
-  app.get("/debug-path", (req, res) => {
-    res.json({
-      url: req.url,
-      path: req.path,
-      originalUrl: req.originalUrl,
-      vercel: process.env.VERCEL === "1"
-    });
-  });
-
   // Friendly root page
   app.get("/", (_req, res) => {
     res.send(`<html>

@@ -1,4 +1,4 @@
-import type { AdminUserListItem } from "../auth/repo";
+import type { AdminUserListItem } from "../auth/repo.js";
 
 export type { AdminUserListItem };
 

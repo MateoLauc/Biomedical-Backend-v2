@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
-import { HttpError } from "../lib/http-errors";
-import { logger } from "../lib/logger";
+import { HttpError } from "../lib/http-errors.js";
+import { logger } from "../lib/logger.js";
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   const requestId = (req as Request & { requestId?: string }).requestId;

@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { adminController } from "./controller";
-import { requireAuth } from "../../middleware/auth";
-import { requireRole } from "../../middleware/auth";
-import { validateBody, validateQuery } from "../../middleware/validation";
-import { asyncHandler } from "../../middleware/async-handler";
-import { listUsersQuerySchema, updateUserVerificationSchema, createAdminSchema } from "./schema";
+import { adminController } from "./controller.js";
+import { requireAuth } from "../../middleware/auth.js";
+import { requireRole } from "../../middleware/auth.js";
+import { validateBody, validateQuery } from "../../middleware/validation.js";
+import { asyncHandler } from "../../middleware/async-handler.js";
+import { listUsersQuerySchema, updateUserVerificationSchema, createAdminSchema } from "./schema.js";
 
 export const adminRoutes = Router();
 

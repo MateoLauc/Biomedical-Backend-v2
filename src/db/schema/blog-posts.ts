@@ -1,5 +1,5 @@
 import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { blogPostStatusEnum, blogPostTypeEnum } from "./enums";
+import { blogPostStatusEnum, blogPostTypeEnum } from "./enums.js";
 
 export const blogPosts = pgTable(
   "blog_posts",
