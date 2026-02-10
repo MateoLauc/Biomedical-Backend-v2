@@ -18,7 +18,9 @@ export const authController = {
     res.cookie("refreshToken", result.tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      // In production allow cross-site cookies (frontend may be on different origin).
+      // In development keep Lax for easier local testing without HTTPS.
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
@@ -77,7 +79,7 @@ export const authController = {
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
 
