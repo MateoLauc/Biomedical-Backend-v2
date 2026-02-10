@@ -3,6 +3,21 @@ import { authService } from "./service.js";
 import { badRequest } from "../../lib/http-errors.js";
 import type { SignupInput, SigninInput } from "./types.js";
 
+const sameSite: "none" | "lax" = process.env.NODE_ENV === "production" ? "none" : "lax";
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite,
+  domain: process.env.COOKIE_DOMAIN || undefined,
+  path: "/",
+  maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+};
+
+const CLEAR_COOKIE_OPTS = {
+  domain: process.env.COOKIE_DOMAIN || undefined,
+  path: "/"
+};
+
 export const authController = {
   async signup(req: Request, res: Response) {
     const result = await authService.signup(req.body as SignupInput);
@@ -15,15 +30,8 @@ export const authController = {
 
     const result = await authService.signin(req.body as SigninInput, ip, userAgent);
 
-    res.cookie("refreshToken", result.tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      // In production allow cross-site cookies (frontend may be on different origin).
-      // In development keep Lax for easier local testing without HTTPS.
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
+    res.cookie("refreshToken", result.tokens.refreshToken, COOKIE_OPTS);
+    res.cookie("user_role", result.user.role, COOKIE_OPTS);
 
     res.json({
       user: result.user,
@@ -75,17 +83,12 @@ export const authController = {
     const ip = req.ip || req.socket.remoteAddress || undefined;
     const userAgent = req.get("user-agent") || undefined;
 
-    const tokens = await authService.refreshAccessToken(refreshToken, ip, userAgent);
+    const result = await authService.refreshAccessToken(refreshToken, ip, userAgent);
 
-    res.cookie("refreshToken", tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: process.env.COOKIE_DOMAIN || undefined,
-      maxAge: 30 * 24 * 60 * 60 * 1000
-    });
+    res.cookie("refreshToken", result.refreshToken, COOKIE_OPTS);
+    res.cookie("user_role", result.role, COOKIE_OPTS);
 
-    res.json({ accessToken: tokens.accessToken });
+    res.json({ accessToken: result.accessToken });
   },
 
   async logout(req: Request, res: Response) {
@@ -94,7 +97,8 @@ export const authController = {
       await authService.logout(refreshToken);
     }
 
-    res.clearCookie("refreshToken");
+    res.clearCookie("refreshToken", CLEAR_COOKIE_OPTS);
+    res.clearCookie("user_role", CLEAR_COOKIE_OPTS);
     res.json({ message: "You have been signed out successfully." });
   }
 };
