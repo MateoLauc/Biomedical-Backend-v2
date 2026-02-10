@@ -25,6 +25,11 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+/** Returned by refreshAccessToken; includes role so the controller can set user_role cookie. */
+export interface RefreshResult extends AuthTokens {
+  role: PublicUser["role"];
+}
+
 export interface PublicUser {
   id: string;
   role: "super_admin" | "admin" | "customer";

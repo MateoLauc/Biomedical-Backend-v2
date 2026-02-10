@@ -11,7 +11,7 @@ import {
 } from "../../lib/email/index.js";
 import { deviceHash, deviceDescription } from "../../lib/device.js";
 import { badRequest, unauthorized, notFound } from "../../lib/http-errors.js";
-import type { SignupInput, SigninInput, AuthTokens, PublicUser } from "./types.js";
+import type { SignupInput, SigninInput, AuthTokens, PublicUser, RefreshResult } from "./types.js";
 
 function toPublicUser(user: typeof users.$inferSelect): PublicUser {
   return {
@@ -250,7 +250,7 @@ export const authService = {
     await authRepo.updateUserPassword(userId, passwordHash);
   },
 
-  async refreshAccessToken(refreshTokenValue: string, ip?: string, userAgent?: string): Promise<AuthTokens> {
+  async refreshAccessToken(refreshTokenValue: string, ip?: string, userAgent?: string): Promise<RefreshResult> {
     const payload = await verifyRefreshToken(refreshTokenValue);
     const tokenHash = hashToken(refreshTokenValue);
     const tokenRecord = await authRepo.findRefreshTokenByHash(tokenHash);
@@ -309,7 +309,8 @@ export const authService = {
 
     return {
       accessToken: newAccessToken,
-      refreshToken: newRefreshTokenJWT
+      refreshToken: newRefreshTokenJWT,
+      role: user.role
     };
   },
 
