@@ -10,12 +10,12 @@ const COOKIE_OPTS = {
   sameSite,
   domain: process.env.COOKIE_DOMAIN || undefined,
   path: "/",
-  maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
 
 const CLEAR_COOKIE_OPTS = {
   domain: process.env.COOKIE_DOMAIN || undefined,
-  path: "/"
+  path: "/",
 };
 
 export const authController = {
