@@ -23,3 +23,6 @@ export const forbidden = (message = "Forbidden", code = "FORBIDDEN") =>
 export const notFound = (message = "Not found", code = "NOT_FOUND") =>
   new HttpError({ statusCode: 404, code, message });
 
+export const serviceUnavailable = (message = "Service unavailable", code = "SERVICE_UNAVAILABLE") =>
+  new HttpError({ statusCode: 503, code, message, expose: true });
+

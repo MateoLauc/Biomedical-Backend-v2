@@ -7,6 +7,7 @@ export const createJobSchema = z.object({
   type: z.string().min(1, "Type is required.").max(100),
   department: z.string().min(1, "Department is required.").max(200),
   icon: z.string().max(50).optional(),
+  applyLink: z.string().max(1024).optional(),
   responsibilities: z.array(z.string().min(1)).min(1, "At least one responsibility is required."),
   status: jobStatusSchema.optional()
 });
@@ -16,6 +17,7 @@ export const updateJobSchema = z.object({
   type: z.string().min(1).max(100).optional(),
   department: z.string().min(1).max(200).optional(),
   icon: z.string().max(50).optional(),
+  applyLink: z.string().max(1024).optional(),
   responsibilities: z.array(z.string().min(1)).optional(),
   status: jobStatusSchema.optional()
 });

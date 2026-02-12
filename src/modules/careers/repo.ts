@@ -3,7 +3,7 @@ import { db } from "../../db/index.js";
 import { jobs } from "../../db/schema/index.js";
 import type { Job, CreateJobInput, UpdateJobInput, JobStatus } from "./types.js";
 
-function rowToJob(row: { id: string; title: string; type: string; department: string; icon: string | null; responsibilities: string; status: JobStatus; createdAt: Date; updatedAt: Date }): Job {
+function rowToJob(row: { id: string; title: string; type: string; department: string; icon: string | null; applyLink?: string | null; responsibilities: string; status: JobStatus; createdAt: Date; updatedAt: Date }): Job {
   let responsibilities: string[] = [];
   try {
     responsibilities = JSON.parse(row.responsibilities || "[]") as string[];
@@ -16,6 +16,7 @@ function rowToJob(row: { id: string; title: string; type: string; department: st
     type: row.type,
     department: row.department,
     icon: row.icon,
+    applyLink: row.applyLink ?? null,
     responsibilities,
     status: row.status,
     createdAt: row.createdAt,
@@ -68,6 +69,7 @@ export const careersRepo = {
         type: data.type,
         department: data.department,
         icon: data.icon ?? null,
+        applyLink: data.applyLink ?? null,
         responsibilities: JSON.stringify(data.responsibilities),
         status: data.status ?? "open"
       })
@@ -83,6 +85,7 @@ export const careersRepo = {
     if (data.department !== undefined) set.department = data.department;
     if (data.icon !== undefined) set.icon = data.icon;
     if (data.responsibilities !== undefined) set.responsibilities = JSON.stringify(data.responsibilities);
+    if (data.applyLink !== undefined) set.applyLink = data.applyLink;
     if (data.status !== undefined) set.status = data.status;
 
     const [row] = await db.update(jobs).set(set as Record<string, unknown>).where(eq(jobs.id, id)).returning();

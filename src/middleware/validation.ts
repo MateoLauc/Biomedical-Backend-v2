@@ -133,7 +133,9 @@ export function validateBody(schema: z.ZodSchema) {
 export function validateQuery(schema: z.ZodSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      req.query = schema.parse(req.query) as Request["query"];
+      schema.parse(req.query);
+      // Don't try to reassign req.query - just validate it
+      // The parsed query is validated, proceed to next middleware
       next();
     } catch (err) {
       if (err instanceof z.ZodError) {

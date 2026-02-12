@@ -7,6 +7,7 @@ export type Job = {
   department: string;
   icon: string | null;
   responsibilities: string[]; // parsed from JSON text in DB
+  applyLink: string | null;
   status: JobStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +19,7 @@ export type CreateJobInput = {
   department: string;
   icon?: string;
   responsibilities: string[];
+  applyLink?: string;
   status?: JobStatus;
 };
 
@@ -27,6 +29,7 @@ export type UpdateJobInput = {
   department?: string;
   icon?: string;
   responsibilities?: string[];
+  applyLink?: string | null;
   status?: JobStatus;
 };
 

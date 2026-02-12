@@ -33,9 +33,27 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     });
   }
 
-  // Handle database constraint violations
+  // Handle database connection errors (network issues, etc.)
   if (err && typeof err === "object" && "message" in err) {
     const errorMessage = String(err.message);
+
+    // Check for database connection errors
+    if (
+      errorMessage.includes("Error connecting to database") ||
+      errorMessage.includes("fetch failed") ||
+      errorMessage.includes("ECONNREFUSED") ||
+      errorMessage.includes("ENOTFOUND") ||
+      errorMessage.includes("ETIMEDOUT")
+    ) {
+      logger.error({ err, requestId }, "Database connection error");
+      return res.status(503).json({
+        error: {
+          code: "SERVICE_UNAVAILABLE",
+          message: "Database service is temporarily unavailable. Please try again later.",
+          requestId
+        }
+      });
+    }
     
     // Check for unique constraint violations
     if (errorMessage.includes("duplicate key value violates unique constraint")) {
