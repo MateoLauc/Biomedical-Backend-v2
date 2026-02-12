@@ -9,6 +9,7 @@ export const jobs = pgTable(
     type: text("type").notNull(), // e.g. "Full-Time", "Part-Time"
     department: text("department").notNull(),
     icon: text("icon"), // e.g. "microscope", "checkmark", "gear"
+    applyLink: text("apply_link"),
     responsibilities: text("responsibilities").notNull(), // JSON array of strings, stored as text
     status: jobStatusEnum("status").notNull().default("open"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
