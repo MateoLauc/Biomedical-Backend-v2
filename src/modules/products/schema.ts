@@ -3,7 +3,8 @@ import { z } from "zod";
 export const createCategorySchema = z.object({
   name: z.string().min(1, "Category name is required.").max(200, "Category name must be no more than 200 characters."),
   slug: z.string().min(1).max(200).optional(),
-  description: z.string().max(1000, "Description must be no more than 1000 characters.").optional()
+  description: z.string().max(1000, "Description must be no more than 1000 characters.").optional(),
+  parentId: z.string().uuid("Invalid parent category ID.").nullable().optional(),
 });
 
 export const updateCategorySchema = z.object({

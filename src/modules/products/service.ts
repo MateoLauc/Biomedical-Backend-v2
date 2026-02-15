@@ -13,17 +13,37 @@ function slugify(text: string): string {
 
 export const productsService = {
   // Categories
-  async createCategory(input: CategoryInput): Promise<{ id: string; name: string; slug: string }> {
-    const slug = input.slug || slugify(input.name);
-    const existing = await productsRepo.findCategoryBySlug(slug);
-    if (existing) {
-      throw badRequest("A category with this name already exists.");
-    }
+  async createCategory(input: CategoryInput & { parentId?: string | null }): Promise<{ id: string; name: string; slug: string }> {
+    let slug: string;
+    let categoryData: CategoryInput;
 
-    const categoryData: CategoryInput = {
-      name: input.name.trim(),
-      slug
-    };
+    if (input.parentId != null && input.parentId !== "") {
+      const parent = await productsRepo.findCategoryById(input.parentId);
+      if (!parent) {
+        throw badRequest("Parent category not found.");
+      }
+      const nameSlug = input.slug || slugify(input.name);
+      slug = `${parent.slug}-${nameSlug}`;
+      const existing = await productsRepo.findCategoryBySlug(slug);
+      if (existing) {
+        throw badRequest("A subcategory with this name already exists under this parent.");
+      }
+      categoryData = {
+        name: input.name.trim(),
+        slug,
+        parentCategoryId: input.parentId,
+      };
+    } else {
+      slug = input.slug || slugify(input.name);
+      const existing = await productsRepo.findCategoryBySlug(slug);
+      if (existing) {
+        throw badRequest("A category with this name already exists.");
+      }
+      categoryData = {
+        name: input.name.trim(),
+        slug,
+      };
+    }
     if (input.description) {
       categoryData.description = input.description.trim();
     }

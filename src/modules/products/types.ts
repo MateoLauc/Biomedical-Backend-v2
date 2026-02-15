@@ -9,6 +9,7 @@ export type CategoryInput = {
   name: string;
   slug: string;
   description?: string;
+  parentCategoryId?: string | null;
 };
 
 export type ProductInput = {

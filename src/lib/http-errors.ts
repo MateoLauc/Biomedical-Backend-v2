@@ -25,4 +25,3 @@ export const notFound = (message = "Not found", code = "NOT_FOUND") =>
 
 export const serviceUnavailable = (message = "Service unavailable", code = "SERVICE_UNAVAILABLE") =>
   new HttpError({ statusCode: 503, code, message, expose: true });
-
