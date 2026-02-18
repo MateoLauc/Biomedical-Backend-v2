@@ -5,6 +5,22 @@ import { logger } from "../lib/logger.js";
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
   const requestId = (req as Request & { requestId?: string }).requestId;
 
+    // JWT expired or invalid – return 401 so the client can refresh or re-login
+    if (err && typeof err === "object" && "name" in err) {
+      const name = (err as { name?: string }).name;
+      if (name === "JWTExpired" || name === "JWTClaimValidationFailed") {
+        return res.status(401).json({
+          error: {
+            code: "UNAUTHORIZED",
+            message: name === "JWTExpired"
+              ? "Your session has expired. Please sign in again."
+              : "Invalid session. Please sign in again.",
+            requestId
+          }
+        });
+      }
+    }
+
   if (err instanceof HttpError) {
     if (err.statusCode >= 500) {
       logger.error({ err, requestId }, "Unhandled server error (HttpError)");
@@ -17,6 +33,8 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
       }
     });
   }
+
+
 
   // Multer / upload errors (file size, file type)
   if (err && typeof err === "object" && "code" in err) {

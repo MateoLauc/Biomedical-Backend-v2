@@ -20,6 +20,7 @@ export const createProductSchema = z.object({
   description: z.string().max(5000, "Description must be no more than 5000 characters.").optional(),
   composition: z.string().max(5000, "Composition must be no more than 5000 characters.").optional(),
   indication: z.string().max(5000, "Indication must be no more than 5000 characters.").optional(),
+  storage: z.string().max(5000, "Storage must be no more than 5000 characters.").optional(),
   imageUrl: z
     .union([
       z.string().url("Invalid image URL.").max(2000, "Image URL must be no more than 2000 characters."),
@@ -38,6 +39,7 @@ export const updateProductSchema = z.object({
   description: z.string().max(5000, "Description must be no more than 5000 characters.").optional(),
   composition: z.string().max(5000, "Composition must be no more than 5000 characters.").optional(),
   indication: z.string().max(5000, "Indication must be no more than 5000 characters.").optional(),
+  storage: z.string().max(5000, "Storage must be no more than 5000 characters.").optional(),
   imageUrl: z
     .union([
       z.string().url("Invalid image URL.").max(2000, "Image URL must be no more than 2000 characters."),
