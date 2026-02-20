@@ -23,5 +23,9 @@ export const forbidden = (message = "Forbidden", code = "FORBIDDEN") =>
 export const notFound = (message = "Not found", code = "NOT_FOUND") =>
   new HttpError({ statusCode: 404, code, message });
 
+/** 417 Expectation Failed - e.g. email not verified */
+export const expectationFailed = (message: string, code = "EXPECTATION_FAILED") =>
+  new HttpError({ statusCode: 417, code, message });
+
 export const serviceUnavailable = (message = "Service unavailable", code = "SERVICE_UNAVAILABLE") =>
   new HttpError({ statusCode: 503, code, message, expose: true });

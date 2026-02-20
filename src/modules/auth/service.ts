@@ -7,10 +7,12 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendWelcomeEmail,
-  sendNewDeviceEmail
+  sendNewDeviceEmail,
+  sendAlreadyVerifiedEmail
 } from "../../lib/email/index.js";
 import { deviceHash, deviceDescription } from "../../lib/device.js";
-import { badRequest, unauthorized, notFound } from "../../lib/http-errors.js";
+import { badRequest, unauthorized, notFound, expectationFailed } from "../../lib/http-errors.js";
+import { logger } from "../../lib/logger.js";
 import type { SignupInput, SigninInput, AuthTokens, PublicUser, RefreshResult } from "./types.js";
 
 function toPublicUser(user: typeof users.$inferSelect): PublicUser {
@@ -82,6 +84,10 @@ export const authService = {
     const isValid = await verifyPassword(input.password, user.passwordHash);
     if (!isValid) {
       throw unauthorized("The email or password you entered is incorrect. Please try again.");
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw expectationFailed("Please verify your email address before signing in. Check your inbox for the verification link.");
     }
 
     const hash = deviceHash(ip, userAgent);
@@ -173,13 +179,17 @@ export const authService = {
     const user = await authRepo.findUserByEmail(emailLower);
 
     if (!user) {
+      logger.info({ email: emailLower }, "Resend verification: no user found for email");
       return;
     }
 
     if (user.emailVerifiedAt) {
+      logger.info({ email: user.email }, "Resend verification: user already verified, sending already-verified email");
+      await sendAlreadyVerifiedEmail(user.email, user.firstName);
       return;
     }
 
+    logger.info({ userId: user.id, email: user.email }, "Resend verification: sending verification email");
     const token = generateToken();
     const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

@@ -21,6 +21,11 @@ import {
   newDeviceHtml,
   newDeviceText
 } from "./templates/new-device.js";
+import {
+  alreadyVerifiedSubject,
+  alreadyVerifiedHtml,
+  alreadyVerifiedText
+} from "./templates/already-verified.js";
 import { getLogoAttachment } from "./logo.js";
 import { getBrandConfig } from "./config.js";
 
@@ -163,6 +168,33 @@ export type NewDeviceEmailParams = {
   deviceDescription: string;
   timestamp: string;
 };
+
+export async function sendAlreadyVerifiedEmail(email: string, firstName: string): Promise<void> {
+  const signInUrl = `${baseUrl()}/auth/sign-in`;
+
+  if (!isEmailConfigured()) {
+    logger.info({ email, signInUrl }, "Already verified email (not sent - email not configured)");
+    return;
+  }
+
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: alreadyVerifiedSubject(),
+      html: alreadyVerifiedHtml({ firstName, signInUrl }),
+      text: alreadyVerifiedText({ firstName, signInUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Already verified email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send already verified email");
+    throw err;
+  }
+}
 
 export async function sendNewDeviceEmail(params: NewDeviceEmailParams): Promise<void> {
   const { email, deviceDescription, timestamp } = params;
