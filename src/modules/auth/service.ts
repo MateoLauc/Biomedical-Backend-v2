@@ -2,7 +2,7 @@ import type { users } from "../../db/schema/index.js";
 import { authRepo } from "./repo.js";
 import { hashPassword, verifyPassword } from "../../lib/auth/password.js";
 import { generateToken, hashToken } from "../../lib/auth/tokens.js";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../../lib/auth/jwt.js";
+import { generateAccessToken, generateRefreshToken, getAccessTokenTTLSeconds, verifyRefreshToken } from "../../lib/auth/jwt.js";
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
@@ -112,11 +112,14 @@ export const authService = {
       await authRepo.updateDeviceLastSeen(existingDevice.id);
     }
 
-    const accessToken = await generateAccessToken({
-      userId: user.id,
-      role: user.role,
-      emailVerified: !!user.emailVerifiedAt
-    });
+    const accessToken = await generateAccessToken(
+      {
+        userId: user.id,
+        role: user.role,
+        emailVerified: !!user.emailVerifiedAt
+      },
+      getAccessTokenTTLSeconds(user.role)
+    );
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
@@ -286,11 +289,14 @@ export const authService = {
       throw notFound("We couldn't find your account. Please check your information and try again.");
     }
 
-    const newAccessToken = await generateAccessToken({
-      userId: user.id,
-      role: user.role,
-      emailVerified: !!user.emailVerifiedAt
-    });
+    const newAccessToken = await generateAccessToken(
+      {
+        userId: user.id,
+        role: user.role,
+        emailVerified: !!user.emailVerifiedAt
+      },
+      getAccessTokenTTLSeconds(user.role)
+    );
 
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 

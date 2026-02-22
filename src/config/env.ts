@@ -13,7 +13,12 @@ const envSchema = z.object({
 
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_SECRET: z.string().min(16),
+  /** Fallback when role-based TTL is not used */
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(15 * 60),
+  /** Access token TTL for admin/super_admin (seconds). Default 12 hours. */
+  JWT_ACCESS_TTL_ADMIN_SECONDS: z.coerce.number().int().positive().default(12 * 60 * 60),
+  /** Access token TTL for customer (seconds). Default 24 hours. */
+  JWT_ACCESS_TTL_CUSTOMER_SECONDS: z.coerce.number().int().positive().default(24 * 60 * 60),
   JWT_REFRESH_TTL_SECONDS: z.coerce.number().int().positive().default(30 * 24 * 60 * 60),
 
   MAILTRAP_API_KEY: z.string().optional(),
