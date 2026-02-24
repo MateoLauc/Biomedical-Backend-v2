@@ -15,6 +15,8 @@ adminRoutes.get("/users", validateQuery(listUsersQuerySchema), asyncHandler((req
 adminRoutes.patch("/users/:id/verification", validateBody(updateUserVerificationSchema), asyncHandler((req, res) =>
   adminController.updateUserVerification(req, res)
 ));
+adminRoutes.get("/users/:id/credentials-submission", asyncHandler((req, res) => adminController.getCredentialsSubmission(req, res)));
+adminRoutes.get("/document-proxy", asyncHandler((req, res) => adminController.documentProxy(req, res)));
 adminRoutes.get("/dashboard", asyncHandler((req, res) => adminController.getDashboard(req, res)));
 adminRoutes.get("/inventory", asyncHandler((req, res) => adminController.getInventoryOverview(req, res)));
 

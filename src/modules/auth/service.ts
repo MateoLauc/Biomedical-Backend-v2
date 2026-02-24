@@ -256,7 +256,7 @@ export const authService = {
 
     const isValid = await verifyPassword(currentPassword, user.passwordHash);
     if (!isValid) {
-      throw unauthorized("Your current password is incorrect. Please try again.");
+      throw badRequest("Your current password is incorrect. Please try again.");
     }
 
     const passwordHash = await hashPassword(newPassword);

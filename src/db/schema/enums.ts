@@ -30,3 +30,5 @@ export const blogPostStatusEnum = pgEnum("blog_post_status", ["draft", "publishe
 
 export const blogPostTypeEnum = pgEnum("blog_post_type", ["press_releases", "videos", "news_article"]);
 
+export const credentialsSubmissionStatusEnum = pgEnum("credentials_submission_status", ["draft", "submitted"]);
+

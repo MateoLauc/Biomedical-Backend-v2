@@ -33,6 +33,7 @@ The blog module provides:
 - **Env:** `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (optional; upload returns 503 if not set)
 - **Upload:** Buffer from multer → `uploadImage(buffer, { folder: "blog" })` → returns `{ url, publicId }`
 - **Usage:** Client uploads image via `POST /api/v1/blog/upload-image`, then sends returned `url` in create/update body as `imageUrl`
+- **PDF delivery (e.g. professional credentials):** On the free plan, enable **“Allow delivery of PDF and ZIP files”** in [Cloudinary Console → Settings → Security](https://console.cloudinary.com/settings/security). Otherwise PDF URLs may return an error when opened. Paid plans have no such restriction.
 
 ## API Endpoints
 
