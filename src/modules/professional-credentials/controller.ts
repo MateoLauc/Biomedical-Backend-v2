@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { credentialsService } from "./service.js";
+import type { SaveDraftInput, SubmitInput } from "./types.js";
 import { badRequest } from "../../lib/http-errors.js";
 import { uploadImage, uploadRaw, uploadPdf, isCloudinaryConfigured } from "../../lib/cloudinary.js";
 import { authRepo } from "../auth/repo.js";
@@ -20,7 +21,7 @@ export const credentialsController = {
     if (!userId) {
       return res.status(401).json({ error: "Please sign in to save a draft." });
     }
-    const input = req.body as import("./types.js").SaveDraftInput;
+    const input = req.body as SaveDraftInput;
     const result = await credentialsService.saveDraft(userId, input);
     res.json(result);
   },
@@ -30,7 +31,7 @@ export const credentialsController = {
     if (!userId) {
       return res.status(401).json({ error: "Please sign in to submit." });
     }
-    const input = req.body as import("./types.js").SubmitInput;
+    const input = req.body as SubmitInput;
     const user = await authRepo.findUserById(userId);
     if (!user) {
       return res.status(401).json({ error: "User not found." });
@@ -87,11 +88,12 @@ export const credentialsController = {
       : undefined;
     let url: string;
     if (isPdf) {
+      const publicId = pdfPublicId ?? randomUUID().slice(0, 12);
       try {
-        const result = await uploadPdf(file.buffer, { folder: "credentials/documents", publicId: pdfPublicId });
+        const result = await uploadPdf(file.buffer, { folder: "credentials/documents", publicId });
         url = result.url;
       } catch {
-        const result = await uploadRaw(file.buffer, { folder: "credentials/documents", publicId: pdfPublicId });
+        const result = await uploadRaw(file.buffer, { folder: "credentials/documents", publicId });
         url = result.url;
       }
     } else {
