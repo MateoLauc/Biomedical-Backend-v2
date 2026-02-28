@@ -15,11 +15,23 @@ export interface RefreshTokenPayload extends JWTPayload {
   tokenId: string;
 }
 
-export async function generateAccessToken(payload: AccessTokenPayload): Promise<string> {
+/** Get access token TTL in seconds by role. Admin/super_admin: 12h, customer: 24h. */
+export function getAccessTokenTTLSeconds(role: string): number {
+  if (role === "admin" || role === "super_admin") {
+    return env.JWT_ACCESS_TTL_ADMIN_SECONDS;
+  }
+  return env.JWT_ACCESS_TTL_CUSTOMER_SECONDS;
+}
+
+export async function generateAccessToken(
+  payload: AccessTokenPayload,
+  ttlSeconds?: number
+): Promise<string> {
+  const ttl = ttlSeconds ?? env.JWT_ACCESS_TTL_SECONDS;
   const jwt = await new SignJWT(payload as Record<string, unknown>)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(Math.floor(Date.now() / 1000) + env.JWT_ACCESS_TTL_SECONDS)
+    .setExpirationTime(Math.floor(Date.now() / 1000) + ttl)
     .sign(accessSecret);
 
   return jwt;

@@ -21,6 +21,26 @@ import {
   newDeviceHtml,
   newDeviceText
 } from "./templates/new-device.js";
+import {
+  alreadyVerifiedSubject,
+  alreadyVerifiedHtml,
+  alreadyVerifiedText
+} from "./templates/already-verified.js";
+import {
+  credentialsSubmittedAdminSubject,
+  credentialsSubmittedAdminHtml,
+  credentialsSubmittedAdminText
+} from "./templates/credentials-submitted-admin.js";
+import {
+  credentialsApprovedSubject,
+  credentialsApprovedHtml,
+  credentialsApprovedText
+} from "./templates/credentials-approved-customer.js";
+import {
+  credentialsDeclinedSubject,
+  credentialsDeclinedHtml,
+  credentialsDeclinedText
+} from "./templates/credentials-declined-customer.js";
 import { getLogoAttachment } from "./logo.js";
 import { getBrandConfig } from "./config.js";
 
@@ -164,6 +184,33 @@ export type NewDeviceEmailParams = {
   timestamp: string;
 };
 
+export async function sendAlreadyVerifiedEmail(email: string, firstName: string): Promise<void> {
+  const signInUrl = `${baseUrl()}/auth/sign-in`;
+
+  if (!isEmailConfigured()) {
+    logger.info({ email, signInUrl }, "Already verified email (not sent - email not configured)");
+    return;
+  }
+
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: alreadyVerifiedSubject(),
+      html: alreadyVerifiedHtml({ firstName, signInUrl }),
+      text: alreadyVerifiedText({ firstName, signInUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Already verified email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send already verified email");
+    throw err;
+  }
+}
+
 export async function sendNewDeviceEmail(params: NewDeviceEmailParams): Promise<void> {
   const { email, deviceDescription, timestamp } = params;
   const appUrl = baseUrl();
@@ -189,6 +236,81 @@ export async function sendNewDeviceEmail(params: NewDeviceEmailParams): Promise<
     logger.info({ email }, "New device email sent");
   } catch (err) {
     logger.error({ err, email }, "Failed to send new device email");
+    throw err;
+  }
+}
+
+export async function sendCredentialsSubmittedAdminEmail(
+  toEmail: string,
+  data: { customerName: string; customerEmail: string }
+): Promise<void> {
+  const reviewUrl = `${baseUrl()}/admin/users`;
+  if (!isEmailConfigured()) {
+    logger.info({ toEmail, customerEmail: data.customerEmail }, "Credentials submitted admin email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email: toEmail }],
+      subject: credentialsSubmittedAdminSubject(),
+      html: credentialsSubmittedAdminHtml({ ...data, reviewUrl }),
+      text: credentialsSubmittedAdminText({ ...data, reviewUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ toEmail }, "Credentials submitted admin email sent");
+  } catch (err) {
+    logger.error({ err, toEmail }, "Failed to send credentials submitted admin email");
+    throw err;
+  }
+}
+
+export async function sendCredentialsApprovedEmail(email: string, firstName: string): Promise<void> {
+  const appUrl = baseUrl();
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Credentials approved email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: credentialsApprovedSubject(),
+      html: credentialsApprovedHtml({ firstName, appUrl }),
+      text: credentialsApprovedText({ firstName, appUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Credentials approved email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send credentials approved email");
+    throw err;
+  }
+}
+
+export async function sendCredentialsDeclinedEmail(email: string, firstName: string): Promise<void> {
+  const appUrl = `${baseUrl()}/profile/credentials`;
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Credentials declined email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: credentialsDeclinedSubject(),
+      html: credentialsDeclinedHtml({ firstName, appUrl }),
+      text: credentialsDeclinedText({ firstName, appUrl }),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Credentials declined email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send credentials declined email");
     throw err;
   }
 }

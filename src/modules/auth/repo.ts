@@ -1,4 +1,4 @@
-import { eq, and, or, isNull, desc, sql } from "drizzle-orm";
+import { eq, and, or, not, isNull, desc, sql } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import {
   users,
@@ -261,14 +261,32 @@ export const authRepo = {
     identityVerified?: boolean;
     businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
     prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+    /** When "pending", return users whose credential status is pending (not both approved, not both rejected). */
+    credentialStatus?: "pending";
     limit?: number;
     offset?: number;
   }): Promise<AdminUserListItem[]> {
     const conditions = [];
     if (options?.role) conditions.push(eq(users.role, options.role));
     if (options?.identityVerified !== undefined) conditions.push(eq(users.identityVerified, options.identityVerified));
-    if (options?.businessLicenseStatus) conditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
-    if (options?.prescriptionAuthorityStatus) conditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+    if (options?.credentialStatus === "pending") {
+      const orPending = or(
+        eq(users.businessLicenseStatus, "pending"),
+        eq(users.businessLicenseStatus, "not_submitted"),
+        eq(users.prescriptionAuthorityStatus, "pending"),
+        eq(users.prescriptionAuthorityStatus, "not_submitted")
+      );
+      const notApproved = not(and(eq(users.businessLicenseStatus, "approved"), eq(users.prescriptionAuthorityStatus, "approved"))!);
+      const notRejected = not(and(eq(users.businessLicenseStatus, "rejected"), eq(users.prescriptionAuthorityStatus, "rejected"))!);
+      const a = orPending ?? sql`false`;
+      const b = notApproved ?? sql`false`;
+      const c = notRejected ?? sql`false`;
+      const pendingCond = and(a, b as Parameters<typeof and>[0], c as Parameters<typeof and>[0]);
+      if (pendingCond) conditions.push(pendingCond);
+    } else {
+      if (options?.businessLicenseStatus) conditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
+      if (options?.prescriptionAuthorityStatus) conditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+    }
 
     let query = db
       .select({
@@ -308,16 +326,33 @@ export const authRepo = {
     identityVerified?: boolean;
     businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
     prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
+    credentialStatus?: "pending";
   }): Promise<number> {
-    const conditions = [];
-    if (options?.role) conditions.push(eq(users.role, options.role));
-    if (options?.identityVerified !== undefined) conditions.push(eq(users.identityVerified, options.identityVerified));
-    if (options?.businessLicenseStatus) conditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
-    if (options?.prescriptionAuthorityStatus) conditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+    const countConditions: ReturnType<typeof eq>[] = [];
+    if (options?.role) countConditions.push(eq(users.role, options.role));
+    if (options?.identityVerified !== undefined) countConditions.push(eq(users.identityVerified, options.identityVerified));
+    if (options?.credentialStatus === "pending") {
+      const orPending = or(
+        eq(users.businessLicenseStatus, "pending"),
+        eq(users.businessLicenseStatus, "not_submitted"),
+        eq(users.prescriptionAuthorityStatus, "pending"),
+        eq(users.prescriptionAuthorityStatus, "not_submitted")
+      );
+      const notApproved = not(and(eq(users.businessLicenseStatus, "approved"), eq(users.prescriptionAuthorityStatus, "approved"))!);
+      const notRejected = not(and(eq(users.businessLicenseStatus, "rejected"), eq(users.prescriptionAuthorityStatus, "rejected"))!);
+      const a = orPending ?? sql`false`;
+      const b = notApproved ?? sql`false`;
+      const c = notRejected ?? sql`false`;
+      const pendingCond = and(a, b as Parameters<typeof and>[0], c as Parameters<typeof and>[0]);
+      if (pendingCond) countConditions.push(pendingCond as ReturnType<typeof eq>);
+    } else {
+      if (options?.businessLicenseStatus) countConditions.push(eq(users.businessLicenseStatus, options.businessLicenseStatus));
+      if (options?.prescriptionAuthorityStatus) countConditions.push(eq(users.prescriptionAuthorityStatus, options.prescriptionAuthorityStatus));
+    }
 
     let query = db.select({ count: sql<number>`count(*)` }).from(users);
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as typeof query;
+    if (countConditions.length > 0) {
+      query = query.where(and(...countConditions)) as typeof query;
     }
     const [result] = await query;
     return Number(result?.count ?? 0);
@@ -329,5 +364,19 @@ export const authRepo = {
       .from(users)
       .where(or(eq(users.businessLicenseStatus, "pending"), eq(users.prescriptionAuthorityStatus, "pending")));
     return Number(result?.count ?? 0);
-  }
+  },
+
+  /** Users with both business license and prescription authority rejected. */
+  async countRejectedUsers(): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(
+        and(
+          eq(users.businessLicenseStatus, "rejected"),
+          eq(users.prescriptionAuthorityStatus, "rejected")
+        )
+      );
+    return Number(result?.count ?? 0);
+  },
 };

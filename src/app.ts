@@ -21,6 +21,7 @@ import { userRoutes } from "./modules/user/routes.js";
 import { notificationsRoutes } from "./modules/notifications/routes.js";
 import { careersRoutes } from "./modules/careers/routes.js";
 import { blogRoutes } from "./modules/blog/routes.js";
+import { credentialsRoutes } from "./modules/professional-credentials/routes.js";
 
 export function createApp(): Express {
   const app = express();
@@ -82,6 +83,7 @@ export function createApp(): Express {
   app.use(`${apiBase}/notifications`, notificationsRoutes);
   app.use(`${apiBase}/careers`, careersRoutes);
   app.use(`${apiBase}/blog`, blogRoutes);
+  app.use(`${apiBase}/credentials`, credentialsRoutes);
 
   app.use((_req, res) => {
     res.status(404).json({

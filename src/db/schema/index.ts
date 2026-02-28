@@ -15,4 +15,6 @@ export * from "./order-items.js";
 export * from "./notifications.js";
 export * from "./jobs.js";
 export * from "./blog-posts.js";
+export * from "./professional-credentials-submissions.js";
+export * from "./professional-credentials-documents.js";
 

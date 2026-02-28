@@ -8,6 +8,7 @@ export type DashboardStats = {
   totalOrders: number;
   revenue: number;
   pendingVerifications: number;
+  rejectedUsersCount: number;
   lowStockCount: number;
   ordersByStatus: {
     pending: number;
@@ -28,6 +29,7 @@ export type InventoryOverview = {
 export type ListUsersQuery = {
   role?: "super_admin" | "admin" | "customer";
   identityVerified?: boolean | string;
+  status?: "verified" | "pending" | "rejected";
   businessLicenseStatus?: "not_submitted" | "pending" | "approved" | "rejected";
   prescriptionAuthorityStatus?: "not_submitted" | "pending" | "approved" | "rejected";
   page?: number;

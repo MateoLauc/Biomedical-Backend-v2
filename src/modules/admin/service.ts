@@ -4,7 +4,7 @@ import { ordersRepo } from "../orders/repo.js";
 import { badRequest, forbidden, notFound } from "../../lib/http-errors.js";
 import type { AdminUserListItem, DashboardStats, InventoryOverview, ListUsersQuery, UpdateUserVerificationInput } from "./types.js";
 import { hashPassword } from "../../lib/auth/password.js";
-import { sendAdminWelcomeEmail } from "../../lib/email/index.js";
+import { sendAdminWelcomeEmail, sendCredentialsApprovedEmail, sendCredentialsDeclinedEmail } from "../../lib/email/index.js";
 import { auditRepo } from "../audit/repo.js";
 
 export const adminService = {
@@ -25,16 +25,24 @@ export const adminService = {
     if (query.identityVerified !== undefined) {
       filters.identityVerified = query.identityVerified === "true" || query.identityVerified === true;
     }
-    if (query.businessLicenseStatus) filters.businessLicenseStatus = query.businessLicenseStatus as "not_submitted" | "pending" | "approved" | "rejected";
-    if (query.prescriptionAuthorityStatus) filters.prescriptionAuthorityStatus = query.prescriptionAuthorityStatus as "not_submitted" | "pending" | "approved" | "rejected";
+    if (query.status === "pending") {
+      filters.credentialStatus = "pending";
+    } else {
+      if (query.businessLicenseStatus) filters.businessLicenseStatus = query.businessLicenseStatus as "not_submitted" | "pending" | "approved" | "rejected";
+      if (query.prescriptionAuthorityStatus) filters.prescriptionAuthorityStatus = query.prescriptionAuthorityStatus as "not_submitted" | "pending" | "approved" | "rejected";
+    }
 
     const countFilters: Parameters<typeof authRepo.countUsers>[0] = {};
     if (query.role) countFilters.role = query.role as "super_admin" | "admin" | "customer";
     if (query.identityVerified !== undefined) {
       countFilters.identityVerified = query.identityVerified === "true" || query.identityVerified === true;
     }
-    if (query.businessLicenseStatus) countFilters.businessLicenseStatus = query.businessLicenseStatus as "not_submitted" | "pending" | "approved" | "rejected";
-    if (query.prescriptionAuthorityStatus) countFilters.prescriptionAuthorityStatus = query.prescriptionAuthorityStatus as "not_submitted" | "pending" | "approved" | "rejected";
+    if (query.status === "pending") {
+      countFilters.credentialStatus = "pending";
+    } else {
+      if (query.businessLicenseStatus) countFilters.businessLicenseStatus = query.businessLicenseStatus as "not_submitted" | "pending" | "approved" | "rejected";
+      if (query.prescriptionAuthorityStatus) countFilters.prescriptionAuthorityStatus = query.prescriptionAuthorityStatus as "not_submitted" | "pending" | "approved" | "rejected";
+    }
 
     const [users, total] = await Promise.all([authRepo.listUsers(filters), authRepo.countUsers(countFilters)]);
 
@@ -60,6 +68,7 @@ export const adminService = {
       totalOrders,
       revenue,
       pendingVerifications,
+      rejectedUsersCount,
       inventoryCounts,
       ordersPending,
       ordersProcessing,
@@ -72,6 +81,7 @@ export const adminService = {
       ordersRepo.countOrders(),
       ordersRepo.getRevenueTotal(),
       authRepo.countPendingVerifications(),
+      authRepo.countRejectedUsers(),
       productsRepo.getInventoryCounts(),
       ordersRepo.countOrders({ status: "pending" }),
       ordersRepo.countOrders({ status: "processing" }),
@@ -86,6 +96,7 @@ export const adminService = {
       totalOrders,
       revenue,
       pendingVerifications,
+      rejectedUsersCount,
       lowStockCount: inventoryCounts.lowStock,
       ordersByStatus: {
         pending: ordersPending,
@@ -127,6 +138,26 @@ export const adminService = {
     const updated = await authRepo.findUserById(targetUserId);
     if (!updated) {
       throw notFound("User not found.");
+    }
+
+    if (
+      updated.businessLicenseStatus === "approved" &&
+      updated.prescriptionAuthorityStatus === "approved"
+    ) {
+      try {
+        await sendCredentialsApprovedEmail(updated.email, updated.firstName ?? "Customer");
+      } catch (err) {
+        console.error("Failed to send credentials approved email to", updated.email, err);
+      }
+    } else if (
+      updated.businessLicenseStatus === "rejected" &&
+      updated.prescriptionAuthorityStatus === "rejected"
+    ) {
+      try {
+        await sendCredentialsDeclinedEmail(updated.email, updated.firstName ?? "Customer");
+      } catch (err) {
+        console.error("Failed to send credentials declined email to", updated.email, err);
+      }
     }
 
     return {

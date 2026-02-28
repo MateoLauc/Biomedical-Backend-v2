@@ -164,6 +164,9 @@ export const productsService = {
     if (input.indication) {
       productData.indication = input.indication.trim();
     }
+    if (input.storage) {
+      productData.storage = input.storage.trim();
+    }
     if (input.imageUrl !== undefined) {
       productData.imageUrl = input.imageUrl && input.imageUrl.trim() ? input.imageUrl.trim() : null;
     }
@@ -296,6 +299,9 @@ export const productsService = {
     }
     if (input.indication !== undefined) {
       updateData.indication = input.indication?.trim();
+    }
+    if (input.storage !== undefined) {
+      updateData.storage = input.storage?.trim();
     }
     if (input.requiresApproval !== undefined) {
       updateData.requiresApproval = input.requiresApproval;

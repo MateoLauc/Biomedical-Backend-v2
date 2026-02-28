@@ -19,6 +19,7 @@ export type ProductInput = {
   description?: string;
   composition?: string;
   indication?: string;
+  storage?: string;
   imageUrl?: string | null;
   requiresApproval: boolean;
   stockQuantity?: number;

@@ -47,7 +47,11 @@ export const authController = {
 
   async resendVerificationEmail(req: Request, res: Response) {
     const body = req.body as { email: string };
-    await authService.resendVerificationEmail(body.email);
+    const email = typeof body?.email === "string" ? body.email.trim() : "";
+    if (!email) {
+      throw badRequest("Email is required.");
+    }
+    await authService.resendVerificationEmail(email);
     res.status(202).json({ message: "If an account exists with this email, a verification link has been sent." });
   },
 
