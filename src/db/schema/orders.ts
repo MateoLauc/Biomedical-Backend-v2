@@ -20,9 +20,11 @@ export const orders = pgTable(
     
     // Payment details
     paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
-    paymentMethod: text("payment_method").notNull().default("paystack"), // "paystack" for now
-    paymentReference: text("payment_reference"), // Paystack reference
-    paymentId: text("payment_id"), // Paystack payment ID after verification
+    paymentMethod: text("payment_method").notNull().default("bank_transfer"),
+    paymentReference: text("payment_reference"),
+    paymentId: text("payment_id"),
+    paymentProofUrl: text("payment_proof_url"),
+    paymentProofFileName: text("payment_proof_file_name"),
     
     // Pricing (snapshot at time of order)
     subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),

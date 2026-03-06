@@ -41,10 +41,25 @@ import {
   credentialsDeclinedHtml,
   credentialsDeclinedText
 } from "./templates/credentials-declined-customer.js";
+import {
+  paymentProofSubmittedAdminSubject,
+  paymentProofSubmittedAdminHtml,
+  paymentProofSubmittedAdminText
+} from "./templates/payment-proof-submitted-admin.js";
+import {
+  orderPaymentApprovedSubject,
+  orderPaymentApprovedHtml,
+  orderPaymentApprovedText
+} from "./templates/order-payment-approved-customer.js";
+import {
+  orderPaymentRejectedSubject,
+  orderPaymentRejectedHtml,
+  orderPaymentRejectedText
+} from "./templates/order-payment-rejected-customer.js";
 import { getLogoAttachment } from "./logo.js";
 import { getBrandConfig } from "./config.js";
 
-function baseUrl(): string {
+export function baseUrl(): string {
   const first = env.CORS_ORIGINS.split(",")[0]?.trim();
   return first || "http://localhost:3000";
 }
@@ -311,6 +326,125 @@ export async function sendCredentialsDeclinedEmail(email: string, firstName: str
     logger.info({ email }, "Credentials declined email sent");
   } catch (err) {
     logger.error({ err, email }, "Failed to send credentials declined email");
+    throw err;
+  }
+}
+
+export async function sendPaymentProofSubmittedAdminEmail(
+  toEmail: string,
+  data: { orderNumber: string; orderId: string; customerName: string; customerEmail: string; total: string; reviewUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ toEmail, orderNumber: data.orderNumber }, "Payment proof submitted admin email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email: toEmail }],
+      subject: paymentProofSubmittedAdminSubject(),
+      html: paymentProofSubmittedAdminHtml(data),
+      text: paymentProofSubmittedAdminText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ toEmail }, "Payment proof submitted admin email sent");
+  } catch (err) {
+    logger.error({ err, toEmail }, "Failed to send payment proof submitted admin email");
+    throw err;
+  }
+}
+
+export async function sendOrderPaymentApprovedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; orderDetailUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order payment approved email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: orderPaymentApprovedSubject(),
+      html: orderPaymentApprovedHtml(data),
+      text: orderPaymentApprovedText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order payment approved email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order payment approved email");
+    throw err;
+  }
+}
+
+export async function sendOrderPaymentRejectedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; ordersUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order payment rejected email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: orderPaymentRejectedSubject(),
+      html: orderPaymentRejectedHtml(data),
+      text: orderPaymentRejectedText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order payment rejected email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order payment rejected email");
+    throw err;
+  }
+}
+
+export async function sendOrderStatusUpdatedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; status: string; orderDetailUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order status updated email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  const safeName = data.firstName || "there";
+  const subject = `Your order ${data.orderNumber} is now ${data.status}`;
+  const html = `<p>Hi ${safeName},</p>
+<p>Your order <strong>${data.orderNumber}</strong> is now <strong>${data.status}</strong>.</p>
+<p>You can view the latest details any time here:</p>
+<p><a href="${data.orderDetailUrl}">${data.orderDetailUrl}</a></p>
+<p>If you did not place this order, please contact support immediately.</p>`;
+  const text = `Hi ${safeName},
+
+Your order ${data.orderNumber} is now ${data.status}.
+
+You can view the latest details here: ${data.orderDetailUrl}
+
+If you did not place this order, please contact support immediately.`;
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject,
+      html,
+      text,
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order status updated email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order status updated email");
     throw err;
   }
 }
