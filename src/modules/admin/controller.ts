@@ -117,6 +117,39 @@ export const adminController = {
     res.status(201).json({ message: "Admin user created.", admin });
   },
 
+  async updateAdminRole(req: Request, res: Response) {
+    const userRole = req.user?.role;
+    const actorUserId = req.user?.userId;
+    if (!userRole || !actorUserId) {
+      return res.status(401).json({ error: "Please sign in to access this resource." });
+    }
+
+    const id = typeof req.params.id === "string" ? req.params.id : "";
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required." });
+    }
+
+    const body = req.body as { role: "admin" | "super_admin" };
+    const admin = await adminService.updateAdminRole(userRole, actorUserId, id, body.role);
+    res.json({ message: "Admin role updated.", admin });
+  },
+
+  async deleteAdmin(req: Request, res: Response) {
+    const userRole = req.user?.role;
+    const actorUserId = req.user?.userId;
+    if (!userRole || !actorUserId) {
+      return res.status(401).json({ error: "Please sign in to access this resource." });
+    }
+
+    const id = typeof req.params.id === "string" ? req.params.id : "";
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required." });
+    }
+
+    await adminService.deleteAdmin(userRole, actorUserId, id);
+    res.status(204).send();
+  },
+
   /** Stream a credentials document (e.g. PDF) from Cloudinary with correct filename. Avoids CORS and forces inline display. */
   async documentProxy(req: Request, res: Response) {
     if (!req.user?.role) {

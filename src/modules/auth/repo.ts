@@ -37,6 +37,8 @@ export const authRepo = {
     stateOfPractice: string;
     passwordHash: string;
     role?: "super_admin" | "admin" | "customer";
+    emailVerifiedAt?: Date | null;
+    identityVerified?: boolean;
   }): Promise<User> {
     const insertData: typeof users.$inferInsert = { ...data };
     if (data.role) insertData.role = data.role;
@@ -127,6 +129,19 @@ export const authRepo = {
     if (data.prescriptionAuthorityStatus !== undefined) set.prescriptionAuthorityStatus = data.prescriptionAuthorityStatus;
     const [user] = await db.update(users).set(set).where(eq(users.id, userId)).returning();
     return user as User;
+  },
+
+  async updateUserRole(userId: string, role: "super_admin" | "admin" | "customer"): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user as User;
+  },
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   },
 
   async createRefreshToken(data: {

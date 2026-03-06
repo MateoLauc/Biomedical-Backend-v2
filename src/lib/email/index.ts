@@ -56,8 +56,14 @@ import {
   orderPaymentRejectedHtml,
   orderPaymentRejectedText
 } from "./templates/order-payment-rejected-customer.js";
+import {
+  orderStatusUpdatedSubject,
+  orderStatusUpdatedHtml,
+  orderStatusUpdatedText
+} from "./templates/order-status-updated-customer.js";
 import { getLogoAttachment } from "./logo.js";
 import { getBrandConfig } from "./config.js";
+import { emailLayout, buttonHtml } from "./layout.js";
 
 export function baseUrl(): string {
   const first = env.CORS_ORIGINS.split(",")[0]?.trim();
@@ -160,22 +166,42 @@ export async function sendAdminWelcomeEmail(email: string, firstName: string, te
 
   const client = getMailtrapClient()!;
   const from = getFromAddress();
+  const brand = getBrandConfig();
 
-  // Build a simple admin welcome message that includes the temporary password and instructions
-  const html = `
-    ${welcomeHtml({ firstName, appUrl })}
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
-      <tr>
-        <td style="font-size:16px; color:${getBrandConfig().textColor};">
-          <p style="margin:0 0 12px;">An administrator account has been created for you.</p>
-          <p style="margin:0 0 12px;">Temporary password: <strong>${tempPassword}</strong></p>
-          <p style="margin:0 0 12px;">Please sign in and change your password in Settings as soon as you log in.</p>
-        </td>
-      </tr>
-    </table>
-  `;
+  // Admin welcome content: use layout + buttonHtml like other templates
+  const heading = "Administrator account created";
+  const name = (firstName || "").trim() || "there";
+  const content = `
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="font-size: 20px; font-weight: 600; color: ${brand.textColor}; padding-bottom: 16px;">${heading}</td>
+  </tr>
+  <tr>
+    <td style="font-size: 16px; line-height: 1.6; color: ${brand.textColor};">
+      <p style="margin: 0 0 16px;">Hi ${name},</p>
+      <p style="margin: 0 0 16px;">An administrator account has been created for you on Biomedicalng.</p>
+      <p style="margin: 0 0 8px;">Temporary password: <strong>${tempPassword}</strong></p>
+      <p style="margin: 0 0 16px;">Please sign in and change your password from <strong>Settings</strong> as soon as you log in.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      ${buttonHtml(`${appUrl}/auth/sign-in`, "Sign in to dashboard", brand.primaryColor)}
+    </td>
+  </tr>
+</table>
+`;
+  const html = emailLayout(brand, content);
 
-  const text = `${welcomeText({ firstName, appUrl })}\n\nAn administrator account has been created for you.\nTemporary password: ${tempPassword}\n\nPlease sign in and change your password in Settings as soon as you log in.`;
+  const text = `Hi ${name},
+
+An administrator account has been created for you on Biomedicalng.
+
+Temporary password: ${tempPassword}
+
+Please sign in and change your password from Settings as soon as you log in.
+
+Sign in: ${appUrl}/auth/sign-in`;
 
   try {
     await client.send({
@@ -418,28 +444,14 @@ export async function sendOrderStatusUpdatedEmail(
   }
   const client = getMailtrapClient()!;
   const from = getFromAddress();
-  const safeName = data.firstName || "there";
-  const subject = `Your order ${data.orderNumber} is now ${data.status}`;
-  const html = `<p>Hi ${safeName},</p>
-<p>Your order <strong>${data.orderNumber}</strong> is now <strong>${data.status}</strong>.</p>
-<p>You can view the latest details any time here:</p>
-<p><a href="${data.orderDetailUrl}">${data.orderDetailUrl}</a></p>
-<p>If you did not place this order, please contact support immediately.</p>`;
-  const text = `Hi ${safeName},
-
-Your order ${data.orderNumber} is now ${data.status}.
-
-You can view the latest details here: ${data.orderDetailUrl}
-
-If you did not place this order, please contact support immediately.`;
 
   try {
     await client.send({
       from: { name: from.name, email: from.email },
       to: [{ email }],
-      subject,
-      html,
-      text,
+      subject: orderStatusUpdatedSubject({ orderNumber: data.orderNumber, status: data.status }),
+      html: orderStatusUpdatedHtml(data),
+      text: orderStatusUpdatedText(data),
       attachments: emailAttachments()
     });
     logger.info({ email }, "Order status updated email sent");

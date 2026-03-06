@@ -4,7 +4,7 @@ import { requireAuth } from "../../middleware/auth.js";
 import { requireRole } from "../../middleware/auth.js";
 import { validateBody, validateQuery } from "../../middleware/validation.js";
 import { asyncHandler } from "../../middleware/async-handler.js";
-import { listUsersQuerySchema, updateUserVerificationSchema, createAdminSchema } from "./schema.js";
+import { listUsersQuerySchema, updateUserVerificationSchema, createAdminSchema, updateAdminRoleSchema } from "./schema.js";
 
 export const adminRoutes = Router();
 
@@ -23,4 +23,14 @@ adminRoutes.get("/inventory", asyncHandler((req, res) => adminController.getInve
 // Create admin user (super_admin only)
 adminRoutes.post("/users", requireRole("super_admin"), validateBody(createAdminSchema), asyncHandler((req, res) =>
   adminController.createAdmin(req, res)
+));
+
+// Update admin role (super_admin only)
+adminRoutes.patch("/users/:id/role", requireRole("super_admin"), validateBody(updateAdminRoleSchema), asyncHandler((req, res) =>
+  adminController.updateAdminRole(req, res)
+));
+
+// Delete admin user (super_admin only)
+adminRoutes.delete("/users/:id", requireRole("super_admin"), asyncHandler((req, res) =>
+  adminController.deleteAdmin(req, res)
 ));

@@ -10,6 +10,10 @@ export const createAdminSchema = z.object({
   stateOfPractice: z.string().min(2, "State of practice is required.")
 });
 
+export const updateAdminRoleSchema = z.object({
+  role: z.enum(["admin", "super_admin"]),
+});
+
 
 const roleSchema = z.enum(["super_admin", "admin", "customer"]);
 const verificationStatusSchema = z.enum(["not_submitted", "pending", "approved", "rejected"]);
