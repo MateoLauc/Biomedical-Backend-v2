@@ -188,6 +188,14 @@ export const adminService = {
       throw badRequest("This email address is already registered. Please use a different email.");
     }
 
+    const phoneNumber = (data.phoneNumber ?? "").trim();
+    if (phoneNumber) {
+      const existingByPhone = await authRepo.findUserByPhoneNumber(phoneNumber);
+      if (existingByPhone) {
+        throw badRequest("This phone number is already registered. Please use a different phone number.");
+      }
+    }
+
     const passwordHash = await hashPassword(data.password);
 
     const user = await authRepo.createUser({
@@ -196,10 +204,13 @@ export const adminService = {
       whoYouAre: "Admin",
       email: data.email.trim(),
       emailLower,
-      phoneNumber: data.phoneNumber ?? "",
-      stateOfPractice: data.stateOfPractice ?? "",
+      phoneNumber,
+      stateOfPractice: (data.stateOfPractice ?? "").trim(),
       passwordHash,
-      role: data.role === "super_admin" ? "super_admin" : "admin"
+      role: data.role === "super_admin" ? "super_admin" : "admin",
+      // Admins don't need to verify email; mark as verified immediately
+      emailVerifiedAt: new Date(),
+      identityVerified: true
     });
 
     // send welcome email with temporary password info
@@ -232,5 +243,75 @@ export const adminService = {
       firstName: user.firstName,
       lastName: user.lastName
     };
+  },
+
+  async updateAdminRole(
+    userRole: string,
+    actorUserId: string,
+    targetUserId: string,
+    role: "admin" | "super_admin"
+  ): Promise<AdminUserListItem> {
+    if (userRole !== "super_admin") {
+      throw forbidden("Only super administrators can update admin roles.");
+    }
+
+    const target = await authRepo.findUserById(targetUserId);
+    if (!target) {
+      throw notFound("User not found.");
+    }
+
+    if (target.id === actorUserId && target.role === "super_admin" && role !== "super_admin") {
+      throw badRequest("You cannot remove your own super admin role.");
+    }
+
+    if (target.role === "super_admin" && role !== "super_admin") {
+      const superAdminCount = await authRepo.countUsers({ role: "super_admin" });
+      if (superAdminCount <= 1) {
+        throw badRequest("At least one super admin is required.");
+      }
+    }
+
+    const updated = await authRepo.updateUserRole(targetUserId, role);
+
+    return {
+      id: updated.id,
+      role: updated.role,
+      firstName: updated.firstName,
+      lastName: updated.lastName,
+      email: updated.email,
+      emailVerifiedAt: updated.emailVerifiedAt,
+      identityVerified: updated.identityVerified,
+      businessLicenseStatus: updated.businessLicenseStatus,
+      prescriptionAuthorityStatus: updated.prescriptionAuthorityStatus,
+      whoYouAre: updated.whoYouAre,
+      stateOfPractice: updated.stateOfPractice,
+      phoneNumber: updated.phoneNumber,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt
+    };
+  },
+
+  async deleteAdmin(userRole: string, actorUserId: string, targetUserId: string): Promise<void> {
+    if (userRole !== "super_admin") {
+      throw forbidden("Only super administrators can remove admin accounts.");
+    }
+
+    if (actorUserId === targetUserId) {
+      throw badRequest("You cannot delete your own account.");
+    }
+
+    const target = await authRepo.findUserById(targetUserId);
+    if (!target) {
+      throw notFound("User not found.");
+    }
+
+    if (target.role === "super_admin") {
+      const superAdminCount = await authRepo.countUsers({ role: "super_admin" });
+      if (superAdminCount <= 1) {
+        throw badRequest("At least one super admin is required.");
+      }
+    }
+
+    await authRepo.deleteUser(targetUserId);
   }
 };

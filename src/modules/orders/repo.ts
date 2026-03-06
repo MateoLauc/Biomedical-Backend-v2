@@ -135,6 +135,7 @@ export const ordersRepo = {
     shippingFee: string;
     total: string;
     notes?: string;
+    paymentMethod?: string;
   }): Promise<Order> {
     const [order] = await db
       .insert(orders)
@@ -145,8 +146,22 @@ export const ordersRepo = {
         subtotal: data.subtotal,
         shippingFee: data.shippingFee,
         total: data.total,
-        notes: data.notes
+        notes: data.notes,
+        paymentMethod: data.paymentMethod ?? "bank_transfer"
       })
+      .returning();
+    return order as Order;
+  },
+
+  async setPaymentProof(orderId: string, paymentProofUrl: string, paymentProofFileName?: string | null): Promise<Order> {
+    const [order] = await db
+      .update(orders)
+      .set({
+        paymentProofUrl,
+        paymentProofFileName: paymentProofFileName ?? null,
+        updatedAt: new Date()
+      })
+      .where(eq(orders.id, orderId))
       .returning();
     return order as Order;
   },

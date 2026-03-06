@@ -41,10 +41,31 @@ import {
   credentialsDeclinedHtml,
   credentialsDeclinedText
 } from "./templates/credentials-declined-customer.js";
+import {
+  paymentProofSubmittedAdminSubject,
+  paymentProofSubmittedAdminHtml,
+  paymentProofSubmittedAdminText
+} from "./templates/payment-proof-submitted-admin.js";
+import {
+  orderPaymentApprovedSubject,
+  orderPaymentApprovedHtml,
+  orderPaymentApprovedText
+} from "./templates/order-payment-approved-customer.js";
+import {
+  orderPaymentRejectedSubject,
+  orderPaymentRejectedHtml,
+  orderPaymentRejectedText
+} from "./templates/order-payment-rejected-customer.js";
+import {
+  orderStatusUpdatedSubject,
+  orderStatusUpdatedHtml,
+  orderStatusUpdatedText
+} from "./templates/order-status-updated-customer.js";
 import { getLogoAttachment } from "./logo.js";
 import { getBrandConfig } from "./config.js";
+import { emailLayout, buttonHtml } from "./layout.js";
 
-function baseUrl(): string {
+export function baseUrl(): string {
   const first = env.CORS_ORIGINS.split(",")[0]?.trim();
   return first || "http://localhost:3000";
 }
@@ -145,22 +166,42 @@ export async function sendAdminWelcomeEmail(email: string, firstName: string, te
 
   const client = getMailtrapClient()!;
   const from = getFromAddress();
+  const brand = getBrandConfig();
 
-  // Build a simple admin welcome message that includes the temporary password and instructions
-  const html = `
-    ${welcomeHtml({ firstName, appUrl })}
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:16px;">
-      <tr>
-        <td style="font-size:16px; color:${getBrandConfig().textColor};">
-          <p style="margin:0 0 12px;">An administrator account has been created for you.</p>
-          <p style="margin:0 0 12px;">Temporary password: <strong>${tempPassword}</strong></p>
-          <p style="margin:0 0 12px;">Please sign in and change your password in Settings as soon as you log in.</p>
-        </td>
-      </tr>
-    </table>
-  `;
+  // Admin welcome content: use layout + buttonHtml like other templates
+  const heading = "Administrator account created";
+  const name = (firstName || "").trim() || "there";
+  const content = `
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td style="font-size: 20px; font-weight: 600; color: ${brand.textColor}; padding-bottom: 16px;">${heading}</td>
+  </tr>
+  <tr>
+    <td style="font-size: 16px; line-height: 1.6; color: ${brand.textColor};">
+      <p style="margin: 0 0 16px;">Hi ${name},</p>
+      <p style="margin: 0 0 16px;">An administrator account has been created for you on Biomedicalng.</p>
+      <p style="margin: 0 0 8px;">Temporary password: <strong>${tempPassword}</strong></p>
+      <p style="margin: 0 0 16px;">Please sign in and change your password from <strong>Settings</strong> as soon as you log in.</p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      ${buttonHtml(`${appUrl}/auth/sign-in`, "Sign in to dashboard", brand.primaryColor)}
+    </td>
+  </tr>
+</table>
+`;
+  const html = emailLayout(brand, content);
 
-  const text = `${welcomeText({ firstName, appUrl })}\n\nAn administrator account has been created for you.\nTemporary password: ${tempPassword}\n\nPlease sign in and change your password in Settings as soon as you log in.`;
+  const text = `Hi ${name},
+
+An administrator account has been created for you on Biomedicalng.
+
+Temporary password: ${tempPassword}
+
+Please sign in and change your password from Settings as soon as you log in.
+
+Sign in: ${appUrl}/auth/sign-in`;
 
   try {
     await client.send({
@@ -311,6 +352,111 @@ export async function sendCredentialsDeclinedEmail(email: string, firstName: str
     logger.info({ email }, "Credentials declined email sent");
   } catch (err) {
     logger.error({ err, email }, "Failed to send credentials declined email");
+    throw err;
+  }
+}
+
+export async function sendPaymentProofSubmittedAdminEmail(
+  toEmail: string,
+  data: { orderNumber: string; orderId: string; customerName: string; customerEmail: string; total: string; reviewUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ toEmail, orderNumber: data.orderNumber }, "Payment proof submitted admin email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email: toEmail }],
+      subject: paymentProofSubmittedAdminSubject(),
+      html: paymentProofSubmittedAdminHtml(data),
+      text: paymentProofSubmittedAdminText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ toEmail }, "Payment proof submitted admin email sent");
+  } catch (err) {
+    logger.error({ err, toEmail }, "Failed to send payment proof submitted admin email");
+    throw err;
+  }
+}
+
+export async function sendOrderPaymentApprovedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; orderDetailUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order payment approved email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: orderPaymentApprovedSubject(),
+      html: orderPaymentApprovedHtml(data),
+      text: orderPaymentApprovedText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order payment approved email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order payment approved email");
+    throw err;
+  }
+}
+
+export async function sendOrderPaymentRejectedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; ordersUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order payment rejected email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: orderPaymentRejectedSubject(),
+      html: orderPaymentRejectedHtml(data),
+      text: orderPaymentRejectedText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order payment rejected email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order payment rejected email");
+    throw err;
+  }
+}
+
+export async function sendOrderStatusUpdatedEmail(
+  email: string,
+  data: { firstName: string; orderNumber: string; status: string; orderDetailUrl: string }
+): Promise<void> {
+  if (!isEmailConfigured()) {
+    logger.info({ email }, "Order status updated email (not sent - email not configured)");
+    return;
+  }
+  const client = getMailtrapClient()!;
+  const from = getFromAddress();
+
+  try {
+    await client.send({
+      from: { name: from.name, email: from.email },
+      to: [{ email }],
+      subject: orderStatusUpdatedSubject({ orderNumber: data.orderNumber, status: data.status }),
+      html: orderStatusUpdatedHtml(data),
+      text: orderStatusUpdatedText(data),
+      attachments: emailAttachments()
+    });
+    logger.info({ email }, "Order status updated email sent");
+  } catch (err) {
+    logger.error({ err, email }, "Failed to send order status updated email");
     throw err;
   }
 }

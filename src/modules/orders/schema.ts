@@ -14,6 +14,11 @@ export const updateOrderStatusSchema = z.object({
   notes: z.string().max(1000, "Notes cannot exceed 1000 characters.").optional()
 });
 
+export const updatePaymentStatusSchema = z.object({
+  paymentStatus: z.enum(["paid", "failed", "refunded"]),
+  status: z.enum(["pending", "processing", "shipped", "delivered", "cancelled"]).optional()
+});
+
 export const cancelOrderSchema = z.object({
   reason: z.string().min(5, "Cancellation reason must be at least 5 characters.").max(500, "Cancellation reason cannot exceed 500 characters.")
 });

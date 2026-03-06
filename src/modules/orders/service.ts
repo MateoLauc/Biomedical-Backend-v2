@@ -2,9 +2,18 @@ import { ordersRepo } from "./repo.js";
 import { cartRepo } from "../cart/repo.js";
 import { shippingRepo } from "../shipping/repo.js";
 import { authRepo } from "../auth/repo.js";
+import { productsRepo } from "../products/repo.js";
 import { canPurchaseProduct } from "../../lib/policies/purchase-policy.js";
-import { initializePayment, verifyPayment } from "../../lib/payments/paystack.js";
-import { badRequest, notFound, forbidden, unauthorized } from "../../lib/http-errors.js";
+import { badRequest, notFound, forbidden } from "../../lib/http-errors.js";
+import { logger } from "../../lib/logger.js";
+import {
+  baseUrl,
+  sendOrderPaymentApprovedEmail,
+  sendOrderPaymentRejectedEmail,
+  sendPaymentProofSubmittedAdminEmail,
+  sendOrderStatusUpdatedEmail,
+} from "../../lib/email/index.js";
+import { notificationsRepo } from "../notifications/repo.js";
 import type { CreateOrderInput, UpdateOrderStatusInput, CancelOrderInput, OrderWithItems } from "./types.js";
 import type { PublicUser } from "../auth/types.js";
 
@@ -20,12 +29,28 @@ function generateOrderNumber(): string {
 }
 
 export const ordersService = {
-  async createOrderFromCart(userId: string, input: CreateOrderInput, user: PublicUser): Promise<{ order: OrderWithItems; paymentReference: string; authorizationUrl: string }> {
+  async createOrderFromCart(
+    userId: string,
+    input: CreateOrderInput,
+    user: PublicUser,
+    paymentProof?: { paymentProofUrl: string; paymentProofFileName: string }
+  ): Promise<{ order: OrderWithItems }> {
+    logger.info({ userId, shippingAddressId: input?.shippingAddressId }, "[createOrderFromCart] start");
     // Get user's cart
     const cartItems = await cartRepo.getCartItemsWithDetails(userId);
+    logger.info({ cartItemsCount: cartItems.length }, "[createOrderFromCart] cart loaded");
     if (cartItems.length === 0) {
       throw badRequest("Your cart is empty. Please add items to your cart before placing an order.");
     }
+    const first = cartItems[0];
+    const firstVariant = first?.productVariant;
+    logger.info(
+      {
+        firstItemVariantPrice: firstVariant?.price,
+        firstItemVariantPriceType: typeof firstVariant?.price,
+      },
+      "[createOrderFromCart] first cart item variant.price"
+    );
 
     // Verify shipping address belongs to user
     const shippingAddress = await shippingRepo.findShippingAddressById(input.shippingAddressId, userId);
@@ -53,9 +78,18 @@ export const ordersService = {
         }
       }
 
-      // Check stock availability
-      if (variant.stockQuantity < cartItem.quantity) {
-        throw badRequest(`Insufficient stock for ${product.name} (${variant.packSize}). Available: ${variant.stockQuantity}, Requested: ${cartItem.quantity}`);
+      // Check stock from DB (authoritative): fetch current variant and product so we use latest stock
+      const currentVariant = await productsRepo.findProductVariantById(variant.id);
+      const currentProduct = currentVariant
+        ? await productsRepo.findProductById(currentVariant.productId)
+        : null;
+      const variantStock = currentVariant ? Number(currentVariant.stockQuantity) || 0 : 0;
+      const productStock = currentProduct ? Number(currentProduct.stockQuantity) || 0 : 0;
+      const availableStock = Math.max(variantStock, productStock);
+      if (availableStock < cartItem.quantity) {
+        throw badRequest(
+          `Insufficient stock for ${product.name} (${variant.packSize}). Available: ${availableStock}, Requested: ${cartItem.quantity}`
+        );
       }
 
       // Check if variant is still active
@@ -63,7 +97,11 @@ export const ordersService = {
         throw badRequest(`${product.name} (${variant.packSize}) is no longer available.`);
       }
 
-      const itemTotal = parseFloat(variant.price) * cartItem.quantity;
+      const priceNum = Number(parseFloat(String(variant.price ?? 0))) || 0;
+      const itemTotal = priceNum * cartItem.quantity;
+      if (!Number.isFinite(itemTotal)) {
+        throw badRequest(`Invalid price for ${product.name} (${variant.packSize}). Please refresh and try again.`);
+      }
       subtotal += itemTotal;
 
       orderItemsData.push({
@@ -76,9 +114,13 @@ export const ordersService = {
       });
     }
 
-    // Calculate shipping fee (for now, set to 0 - can be calculated based on region/weight later)
+    // Calculate shipping fee (for now, set to 0)
     const shippingFee = 0;
     const total = subtotal + shippingFee;
+    if (!Number.isFinite(subtotal) || !Number.isFinite(total)) {
+      throw badRequest("Unable to calculate order total. Please check your cart and try again.");
+    }
+    logger.info({ subtotal, total, shippingFee }, "[createOrderFromCart] totals computed");
 
     // Generate unique order number
     let orderNumber = generateOrderNumber();
@@ -91,7 +133,7 @@ export const ordersService = {
       }
     }
 
-    // Create order
+    // Create order (bank transfer only)
     const orderData: {
       userId: string;
       shippingAddressId: string;
@@ -100,18 +142,22 @@ export const ordersService = {
       shippingFee: string;
       total: string;
       notes?: string;
+      paymentMethod: string;
     } = {
       userId,
       shippingAddressId: input.shippingAddressId,
       orderNumber,
-      subtotal: subtotal.toFixed(2),
-      shippingFee: shippingFee.toFixed(2),
-      total: total.toFixed(2)
+      subtotal: Number(subtotal).toFixed(2),
+      shippingFee: Number(shippingFee).toFixed(2),
+      total: Number(total).toFixed(2),
+      paymentMethod: "bank_transfer"
     };
     if (input.notes) {
       orderData.notes = input.notes;
     }
+    logger.info({ orderData }, "[createOrderFromCart] creating order");
     const order = await ordersRepo.createOrder(orderData);
+    logger.info({ orderId: order.id }, "[createOrderFromCart] order created");
 
     // Create order items
     for (const itemData of orderItemsData) {
@@ -121,58 +167,42 @@ export const ordersService = {
       });
     }
 
-    // Get user email for Paystack
-    const userRecord = await authRepo.findUserById(userId);
-    if (!userRecord) {
-      throw notFound("User not found.");
-    }
-
-    // Initialize Paystack payment
-    const amountInKobo = Math.round(total * 100); // Convert to kobo (smallest currency unit)
-    const paymentReference = order.orderNumber; // Use order number as payment reference
-
-    const paymentInitData: {
-      email: string;
-      amount: number;
-      reference: string;
-      callback_url?: string;
-      metadata: {
-        orderId: string;
-        userId: string;
-        orderNumber: string;
-      };
-    } = {
-      email: userRecord.email,
-      amount: amountInKobo,
-      reference: paymentReference,
-      metadata: {
-        orderId: order.id,
-        userId: userId,
-        orderNumber: order.orderNumber
+    if (paymentProof?.paymentProofUrl) {
+      await ordersRepo.setPaymentProof(order.id, paymentProof.paymentProofUrl, paymentProof.paymentProofFileName);
+      const dbUser = await authRepo.findUserById(order.userId);
+      const customerName = dbUser ? `${dbUser.firstName ?? ""} ${dbUser.lastName ?? ""}`.trim() || "Customer" : "Customer";
+      const customerEmail = dbUser?.email ?? "";
+      const reviewUrl = `${baseUrl()}/admin/orders?orderId=${order.id}`;
+      const admins = await authRepo.listUsers({ role: "admin", limit: 100 });
+      for (const admin of admins) {
+        if (admin.email) {
+          try {
+            await sendPaymentProofSubmittedAdminEmail(admin.email, {
+              orderNumber: order.orderNumber,
+              orderId: order.id,
+              customerName,
+              customerEmail,
+              total: order.total,
+              reviewUrl
+            });
+          } catch (err) {
+            logger.error({ err, email: admin.email, orderId: order.id }, "Failed to send payment proof admin email");
+          }
+        }
       }
-    };
-    if (input.callbackUrl) {
-      paymentInitData.callback_url = input.callbackUrl;
     }
-    const paymentInit = await initializePayment(paymentInitData);
-
-    // Store payment reference
-    await ordersRepo.setPaymentReference(order.id, paymentReference);
 
     // Clear cart after successful order creation
     await cartRepo.clearCart(userId);
 
     // Get full order with items
+    logger.info({ orderId: order.id }, "[createOrderFromCart] fetching order with items");
     const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userId);
     if (!orderWithItems) {
       throw new Error("Failed to retrieve created order");
     }
-
-    return {
-      order: orderWithItems,
-      paymentReference: paymentInit.data.reference,
-      authorizationUrl: paymentInit.data.authorization_url
-    };
+    logger.info({ orderId: orderWithItems.id }, "[createOrderFromCart] done");
+    return { order: orderWithItems };
   },
 
   async getOrder(id: string, userId: string, userRole: string): Promise<OrderWithItems> {
@@ -186,8 +216,13 @@ export const ordersService = {
     if (userRole === "customer" && order.userId !== userId) {
       throw forbidden("You don't have permission to view this order.");
     }
-
-    return order;
+    const customer = await authRepo.findUserById(order.userId);
+    return {
+      ...order,
+      customerFirstName: customer?.firstName ?? null,
+      customerLastName: customer?.lastName ?? null,
+      customerEmail: customer?.email ?? null,
+    };
   },
 
   async listOrders(options: {
@@ -246,11 +281,20 @@ export const ordersService = {
       ordersRepo.countOrders(countOptions)
     ]);
 
-    // Fetch items for each order
+    // Fetch items and customer info for each order
     const ordersWithItems = await Promise.all(
       ordersList.map(async (order) => {
         const orderWithItems = await ordersRepo.getOrderWithItems(order.id, effectiveUserId);
-        return orderWithItems || { ...order, items: [] };
+        if (!orderWithItems) {
+          return { ...order, items: [] } as OrderWithItems;
+        }
+        const customer = await authRepo.findUserById(orderWithItems.userId);
+        return {
+          ...orderWithItems,
+          customerFirstName: customer?.firstName ?? null,
+          customerLastName: customer?.lastName ?? null,
+          customerEmail: customer?.email ?? null,
+        };
       })
     );
 
@@ -289,13 +333,41 @@ export const ordersService = {
       throw badRequest(`Cannot change order status from ${order.status} to ${input.status}. Valid transitions: ${allowedNextStatuses.join(", ") || "none"}`);
     }
 
-     await ordersRepo.updateOrderStatus(id, input.status, input.notes);
+    await ordersRepo.updateOrderStatus(id, input.status, input.notes);
+
+    // In-app notification for customer
+    await notificationsRepo.create({
+      userId: order.userId,
+      title: "Order update",
+      body: `Your order ${order.orderNumber} is now ${input.status.replace(/_/g, " ")}.`
+    });
+
     const orderWithItems = await ordersRepo.getOrderWithItems(id);
     if (!orderWithItems) {
       throw new Error("Failed to retrieve updated order");
     }
 
-    return orderWithItems;
+    // Email notification for customer
+    const customer = await authRepo.findUserById(order.userId);
+    if (customer?.email) {
+      try {
+        await sendOrderStatusUpdatedEmail(customer.email, {
+          firstName: customer.firstName ?? "there",
+          orderNumber: order.orderNumber,
+          status: input.status,
+          orderDetailUrl: `${baseUrl()}/profile/orders/${order.id}`
+        });
+      } catch (err) {
+        logger.error({ err, orderId: order.id, email: customer.email }, "Failed to send order status email");
+      }
+    }
+
+    return {
+      ...orderWithItems,
+      customerFirstName: customer?.firstName ?? null,
+      customerLastName: customer?.lastName ?? null,
+      customerEmail: customer?.email ?? null,
+    };
   },
 
   async cancelOrder(id: string, input: CancelOrderInput, userId: string, userRole: string): Promise<OrderWithItems> {
@@ -328,89 +400,88 @@ export const ordersService = {
     return orderWithItems;
   },
 
-  async verifyPayment(reference: string, userId: string, userRole: string): Promise<OrderWithItems> {
-    // Verify payment with Paystack
-    const paymentData = await verifyPayment(reference);
-
-    // Find order by payment reference
-    const order = await ordersRepo.findOrderByPaymentReference(reference);
+  async uploadPaymentProof(orderId: string, userId: string, fileUrl: string, fileName: string): Promise<OrderWithItems> {
+    const order = await ordersRepo.findOrderById(orderId, userId);
     if (!order) {
-      throw notFound("Order not found for this payment reference.");
+      throw notFound("Order not found.");
     }
-
-    // Verify ownership (customers can only verify their own orders)
-    if (userRole === "customer" && order.userId !== userId) {
-      throw forbidden("You don't have permission to verify this payment.");
+    if (order.paymentStatus !== "pending") {
+      throw badRequest("Payment proof can only be submitted for orders with pending payment.");
     }
-
-    // Update payment status based on Paystack response
-    let paymentStatus: "pending" | "paid" | "failed" | "refunded" = "pending";
-    if (paymentData.data.status === "success") {
-      paymentStatus = "paid";
-    } else if (paymentData.data.status === "failed") {
-      paymentStatus = "failed";
-    }
-
-    // Update order payment status
-    await ordersRepo.updatePaymentStatus(order.id, paymentStatus, paymentData.data.id.toString());
-
-    // If payment is successful and order is still pending, update to processing
-    if (paymentStatus === "paid" && order.status === "pending") {
-      await ordersRepo.updateOrderStatus(order.id, "processing");
-    }
-
-    const orderWithItems = await ordersRepo.getOrderWithItems(order.id, userRole === "customer" ? userId : undefined);
+    await ordersRepo.setPaymentProof(orderId, fileUrl, fileName);
+    const orderWithItems = await ordersRepo.getOrderWithItems(orderId, userId);
     if (!orderWithItems) {
-      throw new Error("Failed to retrieve order after payment verification");
+      throw new Error("Failed to retrieve order after uploading proof");
     }
-
     return orderWithItems;
   },
 
-  async handleWebhook(payload: string, signature: string): Promise<void> {
-    // Verify webhook signature
-    const { verifyPaystackWebhook } = await import("../../lib/payments/paystack.js");
-    const isValid = verifyPaystackWebhook(payload, signature);
-    if (!isValid) {
-      throw unauthorized("Invalid webhook signature.");
+  async updatePaymentStatus(
+    orderId: string,
+    input: { paymentStatus: "paid" | "failed" | "refunded"; status?: OrderWithItems["status"] },
+    userRole: string
+  ): Promise<OrderWithItems> {
+    if (userRole !== "super_admin" && userRole !== "admin") {
+      throw forbidden("Only administrators can update payment status.");
     }
-
-    const event = JSON.parse(payload) as {
-      event: string;
-      data: {
-        reference: string;
-        status: string;
-        id: number;
-        amount: number;
-        customer: { email: string };
-      };
-    };
-
-    // Handle charge.success event
-    if (event.event === "charge.success") {
-      const order = await ordersRepo.findOrderByPaymentReference(event.data.reference);
-      if (!order) {
-        // Order not found - log but don't throw (webhook should return 200)
-        return;
-      }
-
-      // Update payment status to paid
-      await ordersRepo.updatePaymentStatus(order.id, "paid", event.data.id.toString());
-
-      // If order is still pending, update to processing
-      if (order.status === "pending") {
-        await ordersRepo.updateOrderStatus(order.id, "processing");
+    const order = await ordersRepo.findOrderById(orderId);
+    if (!order) {
+      throw notFound("Order not found.");
+    }
+    if (order.paymentStatus !== "pending") {
+      throw badRequest(`Order payment is already ${order.paymentStatus}.`);
+    }
+    await ordersRepo.updatePaymentStatus(orderId, input.paymentStatus);
+    if (input.paymentStatus === "paid" && order.status === "pending") {
+      await ordersRepo.updateOrderStatus(orderId, "processing");
+    }
+    // In-app notification for customer
+    if (input.paymentStatus === "paid") {
+      await notificationsRepo.create({
+        userId: order.userId,
+        title: "Payment confirmed",
+        body: `Your payment for order ${order.orderNumber} has been confirmed.`
+      });
+    } else if (input.paymentStatus === "failed") {
+      await notificationsRepo.create({
+        userId: order.userId,
+        title: "Payment not confirmed",
+        body: `Your payment for order ${order.orderNumber} could not be confirmed. Please reach out if you need help.`
+      });
+    } else if (input.paymentStatus === "refunded") {
+      await notificationsRepo.create({
+        userId: order.userId,
+        title: "Payment refunded",
+        body: `Your payment for order ${order.orderNumber} has been refunded.`
+      });
+    }
+    const user = await authRepo.findUserById(order.userId);
+    if (user?.email) {
+      const firstName = user.firstName ?? "";
+      const orderDetailUrl = `${baseUrl()}/orders`;
+      const ordersUrl = `${baseUrl()}/orders`;
+      try {
+        if (input.paymentStatus === "paid") {
+          await sendOrderPaymentApprovedEmail(user.email, {
+            firstName,
+            orderNumber: order.orderNumber,
+            orderDetailUrl
+          });
+        } else if (input.paymentStatus === "failed") {
+          await sendOrderPaymentRejectedEmail(user.email, {
+            firstName,
+            orderNumber: order.orderNumber,
+            ordersUrl
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send order payment status email to", user.email, err);
       }
     }
-
-    // Handle charge.failed event
-    if (event.event === "charge.failed") {
-      const order = await ordersRepo.findOrderByPaymentReference(event.data.reference);
-      if (!order) {
-        return;
-      }
-
-      await ordersRepo.updatePaymentStatus(order.id, "failed");
+    const orderWithItems = await ordersRepo.getOrderWithItems(orderId);
+    if (!orderWithItems) {
+      throw new Error("Failed to retrieve updated order");
     }
+    return orderWithItems;
   }
 };

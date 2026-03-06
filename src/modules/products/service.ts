@@ -341,11 +341,13 @@ export const productsService = {
       throw badRequest("Invalid product selected.");
     }
 
+    const rawStock = input.stockQuantity ?? product.stockQuantity ?? 0;
+    const stockQuantity = Number.isFinite(Number(rawStock)) && Number(rawStock) >= 0 ? Number(rawStock) : 0;
     const variant = await productsRepo.createProductVariant({
       productId: input.productId,
       packSize: input.packSize.trim(),
       price: input.price,
-      stockQuantity: input.stockQuantity ?? 0
+      stockQuantity
     });
 
     return {
@@ -369,7 +371,8 @@ export const productsService = {
       updateData.price = input.price;
     }
     if (input.stockQuantity !== undefined) {
-      updateData.stockQuantity = input.stockQuantity;
+      const val = Number(input.stockQuantity);
+      updateData.stockQuantity = Number.isFinite(val) && val >= 0 ? val : 0;
     }
 
     return productsRepo.updateProductVariant(id, updateData);

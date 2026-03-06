@@ -23,7 +23,9 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
 
   if (err instanceof HttpError) {
     if (err.statusCode >= 500) {
-      logger.error({ err, requestId }, "Unhandled server error (HttpError)");
+      logger.error({ err, requestId, message: err.message, stack: err.stack }, "Server error (HttpError 5xx)");
+      console.error("[backend] HttpError 5xx:", err.message);
+      if (err.stack) console.error(err.stack);
     }
     return res.status(err.statusCode).json({
       error: {
@@ -109,7 +111,12 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     }
   }
 
-  logger.error({ err, requestId }, "Unhandled server error");
+  const message = err instanceof Error ? err.message : String(err);
+  const stack = err instanceof Error ? err.stack : undefined;
+  logger.error({ err, requestId, message, stack }, "Unhandled server error");
+  // Fallback so errors always appear in the terminal when running locally
+  console.error("[backend] Unhandled server error:", message);
+  if (stack) console.error(stack);
   return res.status(500).json({
     error: {
       code: "INTERNAL_SERVER_ERROR",

@@ -42,6 +42,8 @@ export type OrderWithItems = {
   paymentMethod: string;
   paymentReference: string | null;
   paymentId: string | null;
+  paymentProofUrl: string | null;
+  paymentProofFileName: string | null;
   subtotal: string;
   shippingFee: string;
   total: string;
@@ -50,5 +52,9 @@ export type OrderWithItems = {
   cancelledReason: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Optional customer info for admin views
+  customerFirstName?: string | null;
+  customerLastName?: string | null;
+  customerEmail?: string | null;
   items: OrderItem[];
 };
